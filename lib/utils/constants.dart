@@ -23,7 +23,6 @@ class Constants {
       cursorColor: lightAccent,
     ),
     scaffoldBackgroundColor: lightBG,
-    fontFamilyFallback: const ['NotoSansMath'],
     bottomAppBarTheme: BottomAppBarTheme(
       elevation: 0,
       color: lightBG,
@@ -51,7 +50,6 @@ class Constants {
 
   static ThemeData darkTheme = ThemeData(
     iconTheme: const IconThemeData(color: Colors.white),
-    fontFamilyFallback: const ['NotoSansMath'],
     colorScheme: ColorScheme.fromSwatch(
       accentColor: darkAccent,
     ).copyWith(
