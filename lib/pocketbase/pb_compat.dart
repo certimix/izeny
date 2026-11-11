@@ -358,22 +358,34 @@ class Query<T extends Object?> {
 
   Query(this.collectionName);
 
+  Query<T> clone() {
+    final q = Query<T>(collectionName);
+    q.sortField = sortField;
+    q.isDescending = isDescending;
+    q.limitCount = limitCount;
+    q.filters.addAll(filters);
+    return q;
+  }
+
   Query<T> orderBy(String field, {bool descending = false}) {
-    sortField = field;
-    isDescending = descending;
-    return this;
+    final q = clone();
+    q.sortField = field;
+    q.isDescending = descending;
+    return q;
   }
 
   Query<T> limit(int n) {
-    limitCount = n;
-    return this;
+    final q = clone();
+    q.limitCount = n;
+    return q;
   }
 
   Query<T> where(String field, {dynamic isEqualTo, dynamic arrayContains}) {
+    final q = clone();
     if (isEqualTo != null) {
-      filters.add('$field = "$isEqualTo"');
+      q.filters.add('$field = "$isEqualTo"');
     }
-    return this;
+    return q;
   }
 
   Future<QuerySnapshot<T>> get() async {

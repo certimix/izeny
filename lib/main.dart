@@ -46,10 +46,11 @@ class _MyAppState extends State<MyApp> {
             theme: themeData(
               notifier.dark ? Constants.darkTheme : Constants.lightTheme,
             ),
-            home: StreamBuilder(
+            home: StreamBuilder<User?>(
+              initialData: FirebaseAuth.instance.currentUser,
               stream: FirebaseAuth.instance.authStateChanges(),
               builder: ((BuildContext context, snapshot) {
-                if (snapshot.hasData) {
+                if (snapshot.data != null) {
                   return TabScreen();
                 } else {
                   return Login();
