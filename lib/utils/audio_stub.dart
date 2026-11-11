@@ -48,3 +48,4 @@ class _StubAudioRecorder implements AppAudioRecorder {
   @override
   bool get isRecording => _recording;
 }
+

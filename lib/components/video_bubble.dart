@@ -135,3 +135,4 @@ class VideoMessageBubble extends StatelessWidget {
     );
   }
 }
+

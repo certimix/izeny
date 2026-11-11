@@ -200,3 +200,4 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
     );
   }
 }
+

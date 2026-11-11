@@ -30,3 +30,4 @@ class AudioRecordResult {
     this.durationSeconds = 0,
   });
 }
+

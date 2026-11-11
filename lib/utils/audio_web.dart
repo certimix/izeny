@@ -138,3 +138,4 @@ class WebAudioRecorder implements AppAudioRecorder {
     return completer.future;
   }
 }
+
