@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:social_media_app/auth/login/login.dart';
+import 'package:social_media_app/auth/register/register.dart';
 
 class Landing extends StatefulWidget {
   @override
@@ -19,24 +20,32 @@ class _LandingState extends State<Landing> {
           children: [
             Align(
               alignment: Alignment.center,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 10.0),
-                child: Image.asset(
-                  'assets/images/new1.png',
-                  height: 200.0,
-                  width: 200.0,
-                  fit: BoxFit.cover,
-                ),
+              child: Image.asset(
+                'assets/images/new1.png',
+                height: 180.0,
+                width: 180.0,
+                fit: BoxFit.contain,
               ),
             ),
+            SizedBox(height: 16.0),
             Text(
               '𝗜𝓩𝓮𝓷𝔂',
               style: TextStyle(
-                fontSize: 22.0,
+                fontSize: 32.0,
                 fontWeight: FontWeight.w900,
-                fontFamily: 'Ubuntu-Regular',
+                fontFamily: 'NotoSansMath',
               ),
-            )
+            ),
+            SizedBox(height: 6.0),
+            Text(
+              'Comunidade & Suporte ZenyDesk',
+              style: TextStyle(
+                fontSize: 13.0,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[600],
+                letterSpacing: 0.5,
+              ),
+            ),
           ],
         ),
       ),
@@ -72,7 +81,7 @@ class _LandingState extends State<Landing> {
                   ),
                   child: Center(
                     child: Text(
-                      'LOGIN',
+                      'ENTRAR',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
@@ -85,7 +94,7 @@ class _LandingState extends State<Landing> {
                 onTap: () {
                   Navigator.of(context).pushReplacement(
                     CupertinoPageRoute(
-                      builder: (_) => Login(),
+                      builder: (_) => Register(),
                     ),
                   );
                 },
@@ -106,7 +115,7 @@ class _LandingState extends State<Landing> {
                   ),
                   child: Center(
                     child: Text(
-                      'SIGN UP',
+                      'CADASTRO',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         color: Colors.white,

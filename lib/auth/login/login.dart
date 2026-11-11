@@ -40,19 +40,20 @@ class _LoginState extends State<Login> {
             SizedBox(height: 10.0),
             Center(
               child: Text(
-                'Welcome back!',
+                'Bem-vindo ao 𝗜𝓩𝓮𝓷𝔂!',
                 style: TextStyle(
                   fontSize: 23.0,
                   fontWeight: FontWeight.w900,
+                  fontFamily: 'NotoSansMath',
                 ),
               ),
             ),
             Center(
               child: Text(
-                'Log into your account and get started!',
+                'Entre com suas credenciais ZenyDesk para continuar',
                 style: TextStyle(
                   fontSize: 12.0,
-                  fontWeight: FontWeight.w300,
+                  fontWeight: FontWeight.w400,
                   color: Theme.of(context).colorScheme.secondary,
                 ),
               ),
@@ -63,7 +64,7 @@ class _LoginState extends State<Login> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Don\'t have an account?'),
+                Text('Não tem uma conta?'),
                 SizedBox(width: 5.0),
                 GestureDetector(
                   onTap: () {
@@ -74,7 +75,7 @@ class _LoginState extends State<Login> {
                     );
                   },
                   child: Text(
-                    'Sign Up',
+                    'Cadastre-se',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.secondary,
@@ -98,7 +99,7 @@ class _LoginState extends State<Login> {
           TextFormBuilder(
             enabled: !viewModel.loading,
             prefix: Ionicons.mail_outline,
-            hintText: "Email",
+            hintText: "E-mail",
             textInputAction: TextInputAction.next,
             validateFunction: Validations.validateEmail,
             onSaved: (String val) {
@@ -112,7 +113,7 @@ class _LoginState extends State<Login> {
             enabled: !viewModel.loading,
             prefix: Ionicons.lock_closed_outline,
             suffix: Ionicons.eye_outline,
-            hintText: "Password",
+            hintText: "Senha",
             textInputAction: TextInputAction.done,
             validateFunction: Validations.validatePassword,
             submitAction: () => viewModel.login(context),
@@ -129,12 +130,12 @@ class _LoginState extends State<Login> {
               child: InkWell(
                 onTap: () => viewModel.forgotPassword(context),
                 child: Container(
-                  width: 130,
+                  width: 140,
                   height: 40,
                   child: Align(
                     alignment: Alignment.centerRight,
                     child: Text(
-                      'Forgot Password?',
+                      'Esqueceu a senha?',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
@@ -161,7 +162,7 @@ class _LoginState extends State<Login> {
               ),
               // highlightElevation: 4.0,
               child: Text(
-                'Log in'.toUpperCase(),
+                'Entrar'.toUpperCase(),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12.0,

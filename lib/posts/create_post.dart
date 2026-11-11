@@ -41,7 +41,14 @@ class _CreatePostState extends State<CreatePost> {
                 Navigator.pop(context);
               },
             ),
-            title: Text('𝗜𝓩𝓮𝓷𝔂'),
+            title: Text(
+              '𝗜𝓩𝓮𝓷𝔂',
+              style: TextStyle(
+                fontFamily: 'NotoSansMath',
+                fontWeight: FontWeight.w900,
+                fontSize: 22.0,
+              ),
+            ),
             centerTitle: true,
             actions: [
               GestureDetector(

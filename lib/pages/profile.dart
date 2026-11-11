@@ -60,7 +60,14 @@ class _ProfileState extends State<Profile> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text('𝗜𝓩𝓮𝓷𝔂'),
+        title: Text(
+          '𝗜𝓩𝓮𝓷𝔂',
+          style: TextStyle(
+            fontFamily: 'NotoSansMath',
+            fontWeight: FontWeight.w900,
+            fontSize: 22.0,
+          ),
+        ),
         actions: [
           widget.profileId == firebaseAuth.currentUser!.uid
               ? Center(

@@ -29,11 +29,22 @@ class _RegisterState extends State<Register> {
           padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 40.0),
           children: [
             SizedBox(height: MediaQuery.of(context).size.height / 10),
-            Text(
-              'Bem-vindo ao 𝗜𝓩𝓮𝓷𝔂\nCrie sua conta e conecte-se com clientes e parceiros',
-              style: GoogleFonts.nunitoSans(
-                fontWeight: FontWeight.bold,
-                fontSize: 25.0,
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'Bem-vindo ao ',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24.0, color: Colors.black87),
+                  ),
+                  TextSpan(
+                    text: '𝗜𝓩𝓮𝓷𝔂\n',
+                    style: TextStyle(fontFamily: 'NotoSansMath', fontWeight: FontWeight.w900, fontSize: 26.0, color: Theme.of(context).colorScheme.secondary),
+                  ),
+                  TextSpan(
+                    text: 'Crie sua conta e conecte-se com clientes e parceiros',
+                    style: TextStyle(fontWeight: FontWeight.w400, fontSize: 13.0, color: Colors.grey[600]),
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 30.0),
@@ -43,12 +54,12 @@ class _RegisterState extends State<Register> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Already have an account  ',
+                  'Já possui uma conta?  ',
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Text(
-                    'Login',
+                    'Entrar',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.secondary,
@@ -72,7 +83,7 @@ class _RegisterState extends State<Register> {
           TextFormBuilder(
             enabled: !viewModel.loading,
             prefix: Ionicons.person_outline,
-            hintText: "Username",
+            hintText: "Nome de Usuário",
             textInputAction: TextInputAction.next,
             validateFunction: Validations.validateName,
             onSaved: (String val) {
@@ -85,7 +96,7 @@ class _RegisterState extends State<Register> {
           TextFormBuilder(
             enabled: !viewModel.loading,
             prefix: Ionicons.mail_outline,
-            hintText: "Email",
+            hintText: "E-mail",
             textInputAction: TextInputAction.next,
             validateFunction: Validations.validateEmail,
             onSaved: (String val) {
@@ -98,7 +109,7 @@ class _RegisterState extends State<Register> {
           TextFormBuilder(
             enabled: !viewModel.loading,
             prefix: Ionicons.pin_outline,
-            hintText: "Country",
+            hintText: "Cidade / Estado",
             textInputAction: TextInputAction.next,
             validateFunction: Validations.validateName,
             onSaved: (String val) {
@@ -112,7 +123,7 @@ class _RegisterState extends State<Register> {
             enabled: !viewModel.loading,
             prefix: Ionicons.lock_closed_outline,
             suffix: Ionicons.eye_outline,
-            hintText: "Password",
+            hintText: "Senha",
             textInputAction: TextInputAction.next,
             validateFunction: Validations.validatePassword,
             obscureText: true,
@@ -126,7 +137,7 @@ class _RegisterState extends State<Register> {
           PasswordFormBuilder(
             enabled: !viewModel.loading,
             prefix: Ionicons.lock_open_outline,
-            hintText: "Confirm Password",
+            hintText: "Confirmar Senha",
             textInputAction: TextInputAction.done,
             validateFunction: Validations.validatePassword,
             submitAction: () => viewModel.register(context),
@@ -151,7 +162,7 @@ class _RegisterState extends State<Register> {
                     Theme.of(context).colorScheme.secondary),
               ),
               child: Text(
-                'sign up'.toUpperCase(),
+                'Cadastrar'.toUpperCase(),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12.0,
