@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:flutter/foundation.dart';
 
 class UserViewModel extends ChangeNotifier {

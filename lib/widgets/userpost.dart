@@ -1,6 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
@@ -364,7 +364,7 @@ class UserPost extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              '${post?.location ?? 'Wooble'}',
+                              '${post?.location ?? '𝗜𝓩𝓮𝓷𝔂'}',
                               style: TextStyle(
                                 fontSize: 10.0,
                                 color: Color(0xff4D4D4D),

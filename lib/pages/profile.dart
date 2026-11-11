@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:social_media_app/pocketbase/pb_compat.dart';
+import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
@@ -60,7 +60,7 @@ class _ProfileState extends State<Profile> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text('WOOBLE'),
+        title: Text('𝗜𝓩𝓮𝓷𝔂'),
         actions: [
           widget.profileId == firebaseAuth.currentUser!.uid
               ? Center(

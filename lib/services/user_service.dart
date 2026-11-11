@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:social_media_app/models/user.dart';
 import 'package:social_media_app/services/services.dart';
 import 'package:social_media_app/utils/firebase.dart';

@@ -1,0 +1,75 @@
+name: Build IZeny (Web & Android)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Compile Web and Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Scaffold Web Platform
+        run: |
+          flutter create . --platforms=web --org com.zenydesk --project-name social_media_app
+
+      - name: Install Dependencies
+        run: |
+          flutter pub get
+
+      - name: Build Web Release
+        run: |
+          flutter build web --release --base-href "/"
+
+      - name: Package Web Bundle
+        run: |
+          cd build/web && zip -r ../../izeny-web.zip . && cd ../..
+
+      - name: Build Android APK Release
+        run: |
+          flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk build/IZeny.apk
+
+      - name: Upload Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: izeny-web
+          path: build/web
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IZeny-apk
+          path: build/IZeny.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/heads/master')
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "IZeny v1.0.${{ github.run_number }}"
+          body: "Release oficial 𝗜𝓩𝓮𝓷𝔂 para Web e Android."
+          files: |
+            build/IZeny.apk
+            izeny-web.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

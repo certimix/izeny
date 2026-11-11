@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
@@ -41,7 +41,7 @@ class _CreatePostState extends State<CreatePost> {
                 Navigator.pop(context);
               },
             ),
-            title: Text('WOOBLE'.toUpperCase()),
+            title: Text('𝗜𝓩𝓮𝓷𝔂'),
             centerTitle: true,
             actions: [
               GestureDetector(

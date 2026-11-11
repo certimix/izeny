@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:social_media_app/pocketbase/pb_compat.dart';
+import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:social_media_app/models/user.dart';
 import 'package:social_media_app/screens/view_image.dart';
 import 'package:social_media_app/services/services.dart';
@@ -36,7 +36,7 @@ class PostService extends Service {
       "ownerId": firebaseAuth.currentUser!.uid,
       "mediaUrl": link,
       "description": description ?? "",
-      "location": location ?? "Wooble",
+      "location": location ?? "𝗜𝓩𝓮𝓷𝔂",
       "timestamp": Timestamp.now(),
     }).catchError((e) {
       print(e);

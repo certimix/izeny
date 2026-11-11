@@ -1,4 +1,4 @@
-import 'package:firebase_core/firebase_core.dart';
+import 'package:social_media_app/pocketbase/pb_compat.dart';
 
 class Config {
   static initFirebase() async {
