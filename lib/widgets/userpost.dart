@@ -1,15 +1,14 @@
-import 'package:animations/animations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:like_button/like_button.dart';
-import 'package:social_media_app/components/custom_card.dart';
-import 'package:social_media_app/components/custom_image.dart';
+import 'package:social_media_app/components/voice_bubble.dart';
+import 'package:social_media_app/components/video_bubble.dart';
 import 'package:social_media_app/models/post.dart';
 import 'package:social_media_app/models/user.dart';
 import 'package:social_media_app/pages/profile.dart';
+import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:social_media_app/screens/comment.dart';
 import 'package:social_media_app/screens/view_image.dart';
 import 'package:social_media_app/services/post_service.dart';
@@ -21,377 +20,383 @@ class UserPost extends StatelessWidget {
 
   UserPost({this.post});
 
-  final DateTime timestamp = DateTime.now();
+  final PostService services = PostService();
 
-  currentUserId() {
+  String currentUserId() {
     return firebaseAuth.currentUser?.uid ?? '';
   }
 
-  final PostService services = PostService();
+  bool _isAudio(String url) {
+    final lower = url.toLowerCase();
+    return lower.endsWith('.webm') ||
+        lower.endsWith('.mp3') ||
+        lower.endsWith('.ogg') ||
+        lower.endsWith('.wav') ||
+        lower.endsWith('.m4a') ||
+        lower.contains('voice_');
+  }
+
+  bool _isVideo(String url) {
+    final lower = url.toLowerCase();
+    return lower.endsWith('.mp4') ||
+        lower.endsWith('.mov') ||
+        lower.endsWith('.webm') && !lower.contains('voice_') ||
+        lower.contains('video_');
+  }
 
   @override
   Widget build(BuildContext context) {
-    return CustomCard(
-      onTap: () {},
-      borderRadius: BorderRadius.circular(10.0),
-      child: OpenContainer(
-        transitionType: ContainerTransitionType.fadeThrough,
-        openBuilder: (BuildContext context, VoidCallback _) {
-          return ViewImage(post: post);
-        },
-        closedElevation: 0.0,
-        closedShape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(10.0),
-          ),
+    if (post == null) return const SizedBox();
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = isDark ? Colors.white10 : const Color(0xFFF1F5F9);
+
+    final mediaUrl = post?.mediaUrl ?? '';
+    final hasMedia = mediaUrl.isNotEmpty;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: dividerColor, width: 1.0),
         ),
-        onClosed: (v) {},
-        closedColor: Theme.of(context).cardColor,
-        closedBuilder: (BuildContext context, VoidCallback openContainer) {
-          return Stack(
-            children: [
-              Column(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(10.0),
-                      topRight: Radius.circular(10.0),
-                    ),
-                    child: CustomImage(
-                      imageUrl: post?.mediaUrl ?? '',
-                      height: 350.0,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Author Avatar (Left column)
+          _buildAuthorAvatar(context),
+          const SizedBox(width: 12.0),
+
+          // Main Post Content (Right column)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Post Header: Name, @username, Location & Timeago
+                _buildHeader(context),
+                const SizedBox(height: 6.0),
+
+                // 2. Post Description / Text
+                if (post?.description != null && post!.description!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10.0),
+                    child: Text(
+                      post!.description!,
+                      style: TextStyle(
+                        fontSize: 15.0,
+                        height: 1.4,
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      ),
                     ),
                   ),
-                  Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 3.0, vertical: 5.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 0.0),
-                          child: Row(
-                            children: [
-                              buildLikeButton(),
-                              SizedBox(width: 5.0),
-                              InkWell(
-                                borderRadius: BorderRadius.circular(10.0),
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    CupertinoPageRoute(
-                                      builder: (_) => Comments(post: post),
-                                    ),
-                                  );
-                                },
-                                child: Icon(
-                                  CupertinoIcons.chat_bubble,
-                                  size: 25.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 5.0),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Flexible(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 0.0),
-                                child: StreamBuilder(
-                                  stream: likesRef
-                                      .where('postId', isEqualTo: post!.postId)
-                                      .snapshots(),
-                                  builder: (context,
-                                      AsyncSnapshot<QuerySnapshot> snapshot) {
-                                    if (snapshot.hasData) {
-                                      QuerySnapshot snap = snapshot.data!;
-                                      List<DocumentSnapshot> docs = snap.docs;
-                                      return buildLikesCount(
-                                          context, docs.length ?? 0);
-                                    } else {
-                                      return buildLikesCount(context, 0);
-                                    }
-                                  },
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 5.0),
-                            StreamBuilder(
-                              stream: commentRef
-                                  .doc(post!.postId!)
-                                  .collection("comments")
-                                  .snapshots(),
-                              builder: (context,
-                                  AsyncSnapshot<QuerySnapshot> snapshot) {
-                                if (snapshot.hasData) {
-                                  QuerySnapshot snap = snapshot.data!;
-                                  List<DocumentSnapshot> docs = snap.docs;
-                                  return buildCommentsCount(
-                                      context, docs.length ?? 0);
-                                } else {
-                                  return buildCommentsCount(context, 0);
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                        Visibility(
-                          visible: post!.description != null &&
-                              post!.description.toString().isNotEmpty,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 5.0, top: 3.0),
-                            child: Text(
-                              '${post?.description ?? ""}',
-                              style: TextStyle(
-                                color:
-                                    Theme.of(context).textTheme.caption!.color,
-                                fontSize: 15.0,
-                              ),
-                              maxLines: 2,
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 3.0),
-                        Padding(
-                          padding: const EdgeInsets.all(3.0),
-                          child: Text(
-                            timeago.format(post?.timestamp?.toDate() ?? DateTime.now()),
-                            style: TextStyle(fontSize: 10.0),
-                          ),
-                        ),
-                        // SizedBox(height: 5.0),
-                      ],
+
+                // 3. Post Media (Photo, Voice Message, or Video)
+                if (hasMedia) ...[
+                  _buildMediaWidget(context, mediaUrl),
+                  const SizedBox(height: 12.0),
+                ],
+
+                // 4. Action Icons Row (Like, Comment, Share)
+                _buildActionsRow(context),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAuthorAvatar(BuildContext context) {
+    final ownerId = post?.ownerId ?? '';
+    return StreamBuilder<DocumentSnapshot>(
+      stream: ownerId.isNotEmpty ? usersRef.doc(ownerId).snapshots() : null,
+      builder: (context, snapshot) {
+        String photoUrl = '';
+        String initial = 'U';
+
+        if (snapshot.hasData && snapshot.data?.data() != null) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          photoUrl = data['photoUrl'] ?? '';
+          final name = data['name'] ?? data['username'] ?? 'U';
+          if (name.isNotEmpty) initial = name[0].toUpperCase();
+        }
+
+        return GestureDetector(
+          onTap: () {
+            if (ownerId.isNotEmpty) {
+              Navigator.of(context).push(
+                CupertinoPageRoute(
+                  builder: (_) => Profile(profileId: ownerId),
+                ),
+              );
+            }
+          },
+          child: CircleAvatar(
+            radius: 20.0,
+            backgroundColor: const Color(0xFF2563EB).withOpacity(0.12),
+            backgroundImage: photoUrl.isNotEmpty ? CachedNetworkImageProvider(photoUrl) : null,
+            child: photoUrl.isEmpty
+                ? Text(
+                    initial,
+                    style: const TextStyle(
+                      color: Color(0xFF2563EB),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.0,
                     ),
                   )
-                ],
-              ),
-              buildUser(context),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  buildLikeButton() {
-    return StreamBuilder(
-      stream: likesRef
-          .where('postId', isEqualTo: post!.postId)
-          .where('userId', isEqualTo: currentUserId())
-          .snapshots(),
-      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-        if (snapshot.hasData) {
-          List<QueryDocumentSnapshot> docs = snapshot.data?.docs ?? [];
-
-          ///replaced this with an animated like button
-          // return IconButton(
-          //   onPressed: () {
-          //     if (docs.isEmpty) {
-          //       likesRef.add({
-          //         'userId': currentUserId(),
-          //         'postId': post!.postId,
-          //         'dateCreated': Timestamp.now(),
-          //       });
-          //       addLikesToNotification();
-          //     } else {
-          //       likesRef.doc(docs[0].id).delete();
-          //       services.removeLikeFromNotification(
-          //           post!.ownerId!, post!.postId!, currentUserId());
-          //     }
-          //   },
-          //   icon: docs.isEmpty
-          //       ? Icon(
-          //           CupertinoIcons.heart,
-          //         )
-          //       : Icon(
-          //           CupertinoIcons.heart_fill,
-          //           color: Colors.red,
-          //         ),
-          // );
-          Future<bool> onLikeButtonTapped(bool isLiked) async {
-            if (docs.isEmpty) {
-              likesRef.add({
-                'userId': currentUserId(),
-                'postId': post!.postId,
-                'dateCreated': Timestamp.now(),
-              });
-              addLikesToNotification();
-              return !isLiked;
-            } else {
-              likesRef.doc(docs[0].id).delete();
-              services.removeLikeFromNotification(
-                  post!.ownerId!, post!.postId!, currentUserId());
-              return isLiked;
-            }
-          }
-
-          return LikeButton(
-            onTap: onLikeButtonTapped,
-            size: 25.0,
-            circleColor:
-                CircleColor(start: Color(0xffFFC0CB), end: Color(0xffff0000)),
-            bubblesColor: BubblesColor(
-                dotPrimaryColor: Color(0xffFFA500),
-                dotSecondaryColor: Color(0xffd8392b),
-                dotThirdColor: Color(0xffFF69B4),
-                dotLastColor: Color(0xffff8c00)),
-            likeBuilder: (bool isLiked) {
-              return Icon(
-                docs.isEmpty ? Ionicons.heart_outline : Ionicons.heart,
-                color: docs.isEmpty
-                    ? Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white
-                        : Colors.black
-                    : Colors.red,
-                size: 25,
-              );
-            },
-          );
-        }
-        return Container();
+                : null,
+          ),
+        );
       },
     );
   }
 
-  addLikesToNotification() async {
-    bool isNotMe = currentUserId() != post!.ownerId;
+  Widget _buildHeader(BuildContext context) {
+    final timeStr = post?.timestamp != null
+        ? timeago.format(post!.timestamp!.toDate(), locale: 'pt_BR')
+        : '';
 
-    if (isNotMe) {
-      DocumentSnapshot doc = await usersRef.doc(currentUserId()).get();
-      user = UserModel.fromJson(doc.data() as Map<String, dynamic>);
-      services.addLikesToNotification(
-        "like",
-        user!.username!,
-        currentUserId(),
-        post!.postId!,
-        post!.mediaUrl!,
-        post!.ownerId!,
-        user!.photoUrl!,
-      );
-    }
+    return Row(
+      children: [
+        Flexible(
+          child: Text(
+            post?.username ?? 'Técnico ZenyDesk',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14.5,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 6.0),
+        if (post?.location != null && post!.location!.isNotEmpty && post!.location != 'IZeny') ...[
+          Text(
+            '• ${post!.location}',
+            style: TextStyle(
+              fontSize: 12.0,
+              color: Colors.grey[500],
+            ),
+          ),
+          const SizedBox(width: 6.0),
+        ],
+        Text(
+          '• $timeStr',
+          style: TextStyle(
+            fontSize: 12.0,
+            color: Colors.grey[500],
+          ),
+        ),
+      ],
+    );
   }
 
-  buildLikesCount(BuildContext context, int count) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 7.0),
-      child: Text(
-        '$count likes',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 10.0,
+  Widget _buildMediaWidget(BuildContext context, String url) {
+    if (_isAudio(url)) {
+      return VoiceMessageBubble(
+        audioUrl: url,
+        isMe: false,
+      );
+    }
+
+    if (_isVideo(url)) {
+      return VideoMessageBubble(
+        videoUrl: url,
+        isMe: false,
+      );
+    }
+
+    // Default: Image / Photo
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          CupertinoPageRoute(
+            builder: (_) => ViewImage(post: post),
+          ),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12.0),
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 400),
+          width: double.infinity,
+          child: CachedNetworkImage(
+            imageUrl: url,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => Container(
+              height: 200,
+              color: Colors.grey.withOpacity(0.12),
+              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+            errorBuilder: (_, __, ___) => const SizedBox(),
+          ),
         ),
       ),
     );
   }
 
-  buildCommentsCount(BuildContext context, int count) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 0.5),
-      child: Text(
-        '-   $count comments',
-        style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  buildUser(BuildContext context) {
-    bool isMe = currentUserId() == post!.ownerId;
-    return StreamBuilder(
-      stream: usersRef.doc(post!.ownerId).snapshots(),
-      builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-        if (snapshot.hasData) {
-          DocumentSnapshot snap = snapshot.data!;
-          UserModel user =
-              UserModel.fromJson(snap.data() as Map<String, dynamic>);
-          return Visibility(
-            visible: !isMe,
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                height: 50.0,
-                decoration: BoxDecoration(
-                  color: Colors.white60,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(10.0),
-                    topRight: Radius.circular(10.0),
-                  ),
-                ),
-                child: GestureDetector(
-                  onTap: () => showProfile(context, profileId: user.id!),
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 10.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        user.photoUrl!.isEmpty
-                            ? CircleAvatar(
-                                radius: 20.0,
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.secondary,
-                                child: Center(
-                                  child: Text(
-                                    '${user.username![0].toUpperCase()}',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15.0,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : CircleAvatar(
-                                radius: 20.0,
-                                backgroundImage: CachedNetworkImageProvider(
-                                  '${user.photoUrl}',
-                                ),
-                              ),
-                        SizedBox(width: 5.0),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${post?.username ?? ""}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                color: Colors.black,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              '${post?.location ?? 'IZeny'}',
-                              style: TextStyle(
-                                fontSize: 10.0,
-                                color: Color(0xff4D4D4D),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+  Widget _buildActionsRow(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // 1. Comment Button
+        InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            Navigator.of(context).push(
+              CupertinoPageRoute(
+                builder: (_) => Comments(post: post),
               ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: Row(
+              children: [
+                Icon(
+                  CupertinoIcons.chat_bubble,
+                  size: 18.0,
+                  color: Colors.grey[600],
+                ),
+                const SizedBox(width: 6.0),
+                StreamBuilder<QuerySnapshot>(
+                  stream: commentRef
+                      .doc(post!.id!)
+                      .collection("comments")
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return Text(
+                        "${snapshot.data?.docs.length ?? 0}",
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      );
+                    }
+                    return Text(
+                      "0",
+                      style: TextStyle(fontSize: 12.0, color: Colors.grey[600]),
+                    );
+                  },
+                ),
+              ],
             ),
-          );
-        } else {
-          return Container();
-        }
-      },
-    );
-  }
+          ),
+        ),
 
-  showProfile(BuildContext context, {String? profileId}) {
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (_) => Profile(profileId: profileId),
-      ),
+        // 2. Like Button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: StreamBuilder<DocumentSnapshot>(
+            stream: likesRef
+                .doc(post!.id!)
+                .collection('likes')
+                .doc(currentUserId())
+                .snapshots(),
+            builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+              final isLiked = snapshot.hasData && snapshot.data?.data() != null;
+              return StreamBuilder<QuerySnapshot>(
+                stream: likesRef.doc(post!.id!).collection('likes').snapshots(),
+                builder: (context, snapshotCount) {
+                  final likeCount = snapshotCount.hasData ? snapshotCount.data!.docs.length : 0;
+                  return Row(
+                    children: [
+                      LikeButton(
+                        size: 18.0,
+                        circleColor: const CircleColor(
+                          start: Color(0xffe11d48),
+                          end: Color(0xffbe123c),
+                        ),
+                        bubblesColor: const BubblesColor(
+                          dotPrimaryColor: Color(0xffe11d48),
+                          dotSecondaryColor: Color(0xffbe123c),
+                        ),
+                        isLiked: isLiked,
+                        likeBuilder: (bool isLiked) {
+                          return Icon(
+                            isLiked ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+                            color: isLiked ? const Color(0xffe11d48) : Colors.grey[600],
+                            size: 18.0,
+                          );
+                        },
+                        onTap: (bool isLiked) async {
+                          if (isLiked) {
+                            postRef.doc(post!.id!).update({
+                              'likes': FieldValue.increment(-1),
+                            });
+                            services.addLikesToNotification(
+                              "like",
+                              post!.ownerId!,
+                              currentUserId(),
+                              post!.id!,
+                              post!.mediaUrl!,
+                            );
+                            likesRef
+                                .doc(post!.id!)
+                                .collection('likes')
+                                .doc(currentUserId())
+                                .delete();
+                          } else {
+                            postRef.doc(post!.id!).update({
+                              'likes': FieldValue.increment(1),
+                            });
+                            services.removeLikeFromNotification(
+                              "like",
+                              post!.ownerId!,
+                              currentUserId(),
+                              post!.id!,
+                            );
+                            likesRef
+                                .doc(post!.id!)
+                                .collection('likes')
+                                .doc(currentUserId())
+                                .set({});
+                          }
+                          return !isLiked;
+                        },
+                      ),
+                      const SizedBox(width: 4.0),
+                      Text(
+                        "$likeCount",
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: isLiked ? const Color(0xffe11d48) : Colors.grey[600],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ),
+
+        // 3. Share / Copy Link Button
+        InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Link da publicação copiado!'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: Icon(
+              CupertinoIcons.share,
+              size: 17.0,
+              color: Colors.grey[600],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

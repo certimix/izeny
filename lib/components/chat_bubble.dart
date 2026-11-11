@@ -5,6 +5,8 @@ import 'package:flutter_chat_bubble/bubble_type.dart';
 import 'package:flutter_chat_bubble/chat_bubble.dart';
 import 'package:flutter_chat_bubble/clippers/chat_bubble_clipper_3.dart';
 import 'package:social_media_app/components/text_time.dart';
+import 'package:social_media_app/components/voice_bubble.dart';
+import 'package:social_media_app/components/video_bubble.dart';
 import 'package:social_media_app/models/enum/message_type.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -38,11 +40,55 @@ class _ChatBubbleWidgetState extends State<ChatBubbleWidget> {
     }
   }
 
-  Color? chatBubbleReplyColor() {
-    if (Theme.of(context).brightness == Brightness.dark) {
-      return Colors.grey[600];
-    } else {
-      return Colors.grey[50];
+  Widget _buildBubbleContent() {
+    switch (widget.type) {
+      case MessageType.AUDIO:
+        return VoiceMessageBubble(
+          audioUrl: widget.message ?? '',
+          isMe: widget.isMe ?? false,
+        );
+      case MessageType.VIDEO:
+        return VideoMessageBubble(
+          videoUrl: widget.message ?? '',
+          isMe: widget.isMe ?? false,
+        );
+      case MessageType.IMAGE:
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: CachedNetworkImage(
+            imageUrl: "${widget.message}",
+            height: 200,
+            width: MediaQuery.of(context).size.width > 600
+                ? 300
+                : MediaQuery.of(context).size.width / 1.4,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => Container(
+              height: 180,
+              color: Colors.grey.withOpacity(0.2),
+              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+            errorBuilder: (_, __, ___) => Container(
+              height: 120,
+              color: Colors.grey.withOpacity(0.2),
+              child: const Center(child: Icon(Icons.broken_image, size: 36, color: Colors.grey)),
+            ),
+          ),
+        );
+      case MessageType.TEXT:
+      default:
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Text(
+            widget.message ?? '',
+            style: TextStyle(
+              fontSize: 14.5,
+              height: 1.35,
+              color: widget.isMe!
+                  ? Colors.white
+                  : Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black87,
+            ),
+          ),
+        );
     }
   }
 
@@ -50,24 +96,13 @@ class _ChatBubbleWidgetState extends State<ChatBubbleWidget> {
   Widget build(BuildContext context) {
     final align =
         widget.isMe! ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final radius = widget.isMe!
-        ? BorderRadius.only(
-            topLeft: Radius.circular(5.0),
-            bottomLeft: Radius.circular(5.0),
-            bottomRight: Radius.circular(10.0),
-          )
-        : BorderRadius.only(
-            topRight: Radius.circular(5.0),
-            bottomLeft: Radius.circular(10.0),
-            bottomRight: Radius.circular(5.0),
-          );
     return Column(
       crossAxisAlignment: align,
       children: <Widget>[
         ChatBubble(
           elevation: 0.0,
-          margin: const EdgeInsets.all(3.0),
-          padding: const EdgeInsets.all(5.0),
+          margin: const EdgeInsets.symmetric(vertical: 3.0, horizontal: 4.0),
+          padding: EdgeInsets.zero,
           alignment:
               widget.isMe! ? Alignment.centerRight : Alignment.centerLeft,
           clipper: ChatBubbleClipper3(
@@ -77,49 +112,17 @@ class _ChatBubbleWidgetState extends State<ChatBubbleWidget> {
                 : BubbleType.receiverBubble,
           ),
           backGroundColor: chatBubbleColor(),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              Padding(
-                padding:
-                    EdgeInsets.all(widget.type == MessageType.TEXT ? 10 : 0),
-                child: widget.type == MessageType.TEXT
-                    ? Text(
-                        widget.message!,
-                        style: TextStyle(
-                          color: widget.isMe!
-                              ? Colors.white
-                              : Theme.of(context).textTheme.headline6!.color,
-                        ),
-                      )
-                    : CachedNetworkImage(
-                        imageUrl: "${widget.message}",
-                        height: 200,
-                        width: MediaQuery.of(context).size.width / 1.3,
-                        fit: BoxFit.cover,
-                      ),
-              ),
-            ],
-          ),
+          child: _buildBubbleContent(),
         ),
         Padding(
           padding: widget.isMe!
-              ? EdgeInsets.only(
-                  right: 10.0,
-                  bottom: 10.0,
-                )
-              : EdgeInsets.only(
-                  left: 10.0,
-                  bottom: 10.0,
-                ),
-          child: TextTime(
-            child: Text(
-              timeago.format(widget.time!.toDate()),
-              style: TextStyle(
-                color: Theme.of(context).textTheme.headline6!.color,
-                fontSize: 10.0,
-              ),
+              ? const EdgeInsets.only(right: 10.0, bottom: 8.0)
+              : const EdgeInsets.only(left: 10.0, bottom: 8.0),
+          child: Text(
+            widget.time != null ? timeago.format(widget.time!.toDate()) : '',
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 10.0,
             ),
           ),
         ),

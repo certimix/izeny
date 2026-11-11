@@ -15,13 +15,19 @@ class Chats extends StatelessWidget {
     viewModel.setUser();
     return Scaffold(
       appBar: AppBar(
-        leading: GestureDetector(
-          onTap: (){
-            Navigator.pop(context);
-          },
-          child: Icon(Icons.keyboard_backspace),
+        automaticallyImplyLeading: false,
+        leading: Navigator.canPop(context)
+            ? GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                },
+                child: const Icon(Icons.keyboard_backspace),
+              )
+            : null,
+        title: const Text(
+          "Mensagens",
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        title: Text("Chats"),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: userChatsStream('${viewModel.user!.uid ?? ""}'),
@@ -38,22 +44,22 @@ class Chats extends StatelessWidget {
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
                         List messages = snapshot.data!.docs;
+                        if (messages.isEmpty) return const SizedBox();
                         Message message = Message.fromJson(
-                          messages.first.data(),
+                          messages.first.data() as Map<String, dynamic>,
                         );
-                        List users = chatListSnapshot.get('users');
-                        // remove the current user's id from the Users
-                        // list so we can get the second user's id
-                        users.remove('${viewModel.user!.uid ?? ""}');
+                        List users = List.from(chatListSnapshot.get('users') ?? []);
+                        users.remove('${viewModel.user?.uid ?? ""}');
+                        if (users.isEmpty) return const SizedBox();
                         String recipient = users[0];
                         return ChatItem(
                           userId: recipient,
                           messageCount: messages.length,
-                          msg: message.content!,
-                          time: message.time!,
+                          msg: message.content ?? '',
+                          time: message.time ?? Timestamp.now(),
                           chatId: chatListSnapshot.id,
-                          type: message.type!,
-                          currentUserId: viewModel.user!.uid ?? "",
+                          type: message.type ?? MessageType.TEXT,
+                          currentUserId: viewModel.user?.uid ?? "",
                         );
                       } else {
                         return SizedBox();

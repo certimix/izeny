@@ -61,6 +61,40 @@ class PBClient {
     }
     return h;
   }
+
+  static Future<String> uploadBytes(
+    List<int> bytes,
+    String fileName, {
+    String collection = 'messages',
+    String field = 'media',
+    Map<String, String>? extraFields,
+  }) async {
+    try {
+      final uri = Uri.parse('${instance.baseUrl}/api/collections/$collection/records');
+      final request = http.MultipartRequest('POST', uri);
+      request.headers.addAll(instance.headers);
+      if (extraFields != null) {
+        request.fields.addAll(extraFields);
+      }
+      request.files.add(http.MultipartFile.fromBytes(field, bytes, filename: fileName));
+
+      final res = await request.send();
+      final respStr = await res.stream.bytesToString();
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final d = jsonDecode(respStr) as Map<String, dynamic>;
+        final id = d['id'];
+        final fn = (d[field] is List && (d[field] as List).isNotEmpty)
+            ? (d[field] as List).first
+            : (d[field] ?? '');
+        return '${instance.baseUrl}/api/files/$collection/$id/$fn';
+      } else {
+        debugPrint('Upload failed with status ${res.statusCode}: $respStr');
+      }
+    } catch (e) {
+      debugPrint('PB uploadBytes error: $e');
+    }
+    return '';
+  }
 }
 
 // ----------------------------------------------------

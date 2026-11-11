@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import 'package:social_media_app/models/enum/message_type.dart';
 import 'package:social_media_app/models/message.dart';
 import 'package:social_media_app/models/user.dart';
 import 'package:social_media_app/pages/profile.dart';
+import 'package:social_media_app/utils/audio_helper.dart';
 import 'package:social_media_app/utils/firebase.dart';
 import 'package:social_media_app/view_models/conversation/conversation_view_model.dart';
 import 'package:social_media_app/view_models/user/user_view_model.dart';
@@ -31,6 +34,131 @@ class _ConversationState extends State<Conversation> {
   TextEditingController messageController = TextEditingController();
   bool isFirst = false;
   String? chatId;
+
+  final AppAudioRecorder _recorder = AppAudioRecorder();
+  bool _isRecording = false;
+  int _recordSeconds = 0;
+  Timer? _recordTimer;
+  bool _isUploadingMedia = false;
+
+  @override
+  void dispose() {
+    _recordTimer?.cancel();
+    messageController.dispose();
+    super.dispose();
+  }
+
+  void _startVoiceRecord() async {
+    final ok = await _recorder.start();
+    if (ok) {
+      setState(() {
+        _isRecording = true;
+        _recordSeconds = 0;
+      });
+      _recordTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+        if (mounted) {
+          setState(() {
+            _recordSeconds++;
+          });
+        }
+      });
+    }
+  }
+
+  void _cancelVoiceRecord() async {
+    _recordTimer?.cancel();
+    await _recorder.stop();
+    setState(() {
+      _isRecording = false;
+      _recordSeconds = 0;
+    });
+  }
+
+  void _sendVoiceRecord(ConversationViewModel viewModel, var user) async {
+    _recordTimer?.cancel();
+    final duration = _recordSeconds;
+    setState(() {
+      _isRecording = false;
+      _isUploadingMedia = true;
+    });
+    final result = await _recorder.stop();
+    if (result != null && result.bytes.isNotEmpty) {
+      final audioUrl = await PBClient.uploadBytes(
+        result.bytes,
+        result.fileName,
+        collection: 'messages',
+        field: 'media',
+      );
+      if (audioUrl.isNotEmpty) {
+        final msg = Message(
+          content: audioUrl,
+          mediaUrl: audioUrl,
+          senderUid: user?.uid,
+          type: MessageType.AUDIO,
+          duration: duration > 0 ? duration : 1,
+          time: Timestamp.now(),
+        );
+        _deliverMessage(viewModel, user, msg);
+      }
+    }
+    if (mounted) {
+      setState(() {
+        _isUploadingMedia = false;
+        _recordSeconds = 0;
+      });
+    }
+  }
+
+  void _pickAndSendVideo(ConversationViewModel viewModel, var user) async {
+    final picker = ImagePicker();
+    final picked = await picker.getVideo(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        _isUploadingMedia = true;
+      });
+      final bytes = await picked.readAsBytes();
+      final videoUrl = await PBClient.uploadBytes(
+        bytes,
+        'video_${DateTime.now().millisecondsSinceEpoch}.mp4',
+        collection: 'messages',
+        field: 'media',
+      );
+      if (videoUrl.isNotEmpty) {
+        final msg = Message(
+          content: videoUrl,
+          mediaUrl: videoUrl,
+          senderUid: user?.uid,
+          type: MessageType.VIDEO,
+          time: Timestamp.now(),
+        );
+        _deliverMessage(viewModel, user, msg);
+      }
+      if (mounted) {
+        setState(() {
+          _isUploadingMedia = false;
+        });
+      }
+    }
+  }
+
+  void _deliverMessage(ConversationViewModel viewModel, var user, Message message) async {
+    if (isFirst) {
+      String id = await viewModel.sendFirstMessage(widget.userId, message);
+      setState(() {
+        isFirst = false;
+        chatId = id;
+        chatIdRef.add({
+          "users": getUser(firebaseAuth.currentUser!.uid, widget.userId),
+          "chatId": id
+        });
+        viewModel.sendMessage(widget.chatId, message);
+      });
+      chatRef.doc(chatId).update({'reads': {}});
+      chatRef.doc(chatId).update({'typing': {}});
+    } else {
+      viewModel.sendMessage(widget.chatId, message);
+    }
+  }
 
   @override
   void initState() {
@@ -118,59 +246,145 @@ class _ConversationState extends State<Conversation> {
                   },
                 ),
               ),
+              if (_isUploadingMedia)
+                Container(
+                  color: Colors.blue.withOpacity(0.1),
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                  child: Row(
+                    children: const [
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Enviando mídia...',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2563EB)),
+                      ),
+                    ],
+                  ),
+                ),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: BottomAppBar(
                   elevation: 10.0,
                   child: Container(
-                    constraints: BoxConstraints(maxHeight: 100.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            CupertinoIcons.photo_on_rectangle,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
-                          onPressed: () => showPhotoOptions(viewModel, user),
-                        ),
-                        Flexible(
-                          child: TextField(
-                            controller: messageController,
-                            focusNode: focusNode,
-                            style: TextStyle(
-                              fontSize: 15.0,
-                              color:
-                                  Theme.of(context).textTheme.headline6!.color,
-                            ),
-                            decoration: InputDecoration(
-                              contentPadding: EdgeInsets.all(10.0),
-                              enabledBorder: InputBorder.none,
-                              border: InputBorder.none,
-                              hintText: "Type your message",
-                              hintStyle: TextStyle(
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .headline6!
-                                    .color,
+                    constraints: const BoxConstraints(maxHeight: 100.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    child: _isRecording
+                        ? Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                tooltip: 'Cancelar Gravação',
+                                onPressed: _cancelVoiceRecord,
                               ),
-                            ),
-                            maxLines: null,
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Gravando áudio de voz... ${_recordSeconds}s',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.redAccent,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 28),
+                                tooltip: 'Enviar Mensagem de Voz',
+                                onPressed: () => _sendVoiceRecord(viewModel, user),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Photo Picker
+                              IconButton(
+                                icon: Icon(
+                                  CupertinoIcons.photo_on_rectangle,
+                                  color: Theme.of(context).colorScheme.secondary,
+                                ),
+                                tooltip: 'Enviar Foto',
+                                onPressed: () => showPhotoOptions(viewModel, user),
+                              ),
+                              // Video Picker
+                              IconButton(
+                                icon: Icon(
+                                  CupertinoIcons.videocam_fill,
+                                  color: Theme.of(context).colorScheme.secondary,
+                                ),
+                                tooltip: 'Enviar Vídeo',
+                                onPressed: () => _pickAndSendVideo(viewModel, user),
+                              ),
+                              // Audio Record Button
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.mic_none_rounded,
+                                  color: Color(0xFF2563EB),
+                                ),
+                                tooltip: 'Gravar Mensagem de Voz',
+                                onPressed: _startVoiceRecord,
+                              ),
+                              // Text Field
+                              Flexible(
+                                child: TextField(
+                                  controller: messageController,
+                                  focusNode: focusNode,
+                                  style: TextStyle(
+                                    fontSize: 15.0,
+                                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                                  ),
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                                    ),
+                                    hintText: "Digite sua mensagem...",
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey[400],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  maxLines: null,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              // Send Button
+                              IconButton(
+                                icon: Icon(
+                                  Ionicons.send,
+                                  color: Theme.of(context).colorScheme.secondary,
+                                ),
+                                tooltip: 'Enviar',
+                                onPressed: () {
+                                  if (messageController.text.isNotEmpty) {
+                                    sendMessage(viewModel, user);
+                                  }
+                                },
+                              ),
+                            ],
                           ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Ionicons.send,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
-                          onPressed: () {
-                            if (messageController.text.isNotEmpty) {
-                              sendMessage(viewModel, user);
-                            }
-                          },
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               )
