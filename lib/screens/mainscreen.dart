@@ -213,8 +213,8 @@ class _TabScreenState extends State<TabScreen> {
             height: 46.0,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: primaryBlue,
-                foregroundColor: Colors.white,
+                primary: primaryBlue,
+                onPrimary: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24.0),

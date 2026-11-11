@@ -67,7 +67,7 @@ class _ChatBubbleWidgetState extends State<ChatBubbleWidget> {
               color: Colors.grey.withOpacity(0.2),
               child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
             ),
-            errorBuilder: (_, __, ___) => Container(
+            errorWidget: (context, url, error) => Container(
               height: 120,
               color: Colors.grey.withOpacity(0.2),
               child: const Center(child: Icon(Icons.broken_image, size: 36, color: Colors.grey)),

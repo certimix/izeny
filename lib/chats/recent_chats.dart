@@ -2,6 +2,7 @@ import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:social_media_app/components/chat_item.dart';
+import 'package:social_media_app/models/enum/message_type.dart';
 import 'package:social_media_app/models/message.dart';
 import 'package:social_media_app/utils/firebase.dart';
 import 'package:social_media_app/view_models/user/user_view_model.dart';

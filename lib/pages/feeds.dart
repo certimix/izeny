@@ -281,8 +281,8 @@ class _FeedsState extends State<Feeds> with AutomaticKeepAliveClientMixin{
               const Spacer(),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  foregroundColor: Colors.white,
+                  primary: const Color(0xFF2563EB),
+                  onPrimary: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),

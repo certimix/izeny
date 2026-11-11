@@ -291,18 +291,19 @@ class UserPost extends StatelessWidget {
         // 2. Like Button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: StreamBuilder<DocumentSnapshot>(
+          child: StreamBuilder<QuerySnapshot>(
             stream: likesRef
-                .doc(post!.id!)
-                .collection('likes')
-                .doc(currentUserId())
+                .where('postId', isEqualTo: post!.postId)
+                .where('userId', isEqualTo: currentUserId())
                 .snapshots(),
-            builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-              final isLiked = snapshot.hasData && snapshot.data?.data() != null;
+            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              final docs = snapshot.hasData ? (snapshot.data?.docs ?? []) : [];
+              final isLiked = docs.isNotEmpty;
+
               return StreamBuilder<QuerySnapshot>(
-                stream: likesRef.doc(post!.id!).collection('likes').snapshots(),
+                stream: likesRef.where('postId', isEqualTo: post!.postId).snapshots(),
                 builder: (context, snapshotCount) {
-                  final likeCount = snapshotCount.hasData ? snapshotCount.data!.docs.length : 0;
+                  final likeCount = snapshotCount.hasData ? (snapshotCount.data?.docs.length ?? 0) : 0;
                   return Row(
                     children: [
                       LikeButton(
@@ -325,39 +326,41 @@ class UserPost extends StatelessWidget {
                         },
                         onTap: (bool isLiked) async {
                           if (isLiked) {
-                            postRef.doc(post!.id!).update({
-                              'likes': FieldValue.increment(-1),
-                            });
-                            services.addLikesToNotification(
-                              "like",
-                              post!.ownerId!,
-                              currentUserId(),
-                              post!.id!,
-                              post!.mediaUrl!,
-                            );
-                            likesRef
-                                .doc(post!.id!)
-                                .collection('likes')
-                                .doc(currentUserId())
-                                .delete();
-                          } else {
-                            postRef.doc(post!.id!).update({
-                              'likes': FieldValue.increment(1),
-                            });
+                            if (docs.isNotEmpty) {
+                              likesRef.doc(docs[0].id).delete();
+                            }
                             services.removeLikeFromNotification(
-                              "like",
                               post!.ownerId!,
+                              post!.postId!,
                               currentUserId(),
-                              post!.id!,
                             );
-                            likesRef
-                                .doc(post!.id!)
-                                .collection('likes')
-                                .doc(currentUserId())
-                                .set({});
+                          } else {
+                            likesRef.add({
+                              'userId': currentUserId(),
+                              'postId': post!.postId,
+                              'dateCreated': Timestamp.now(),
+                            });
+                            _addLikeNotification();
                           }
                           return !isLiked;
                         },
+                      ),
+                      const SizedBox(width: 4.0),
+                      Text(
+                        "$likeCount",
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: isLiked ? const Color(0xffe11d48) : Colors.grey[600],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ),
                       ),
                       const SizedBox(width: 4.0),
                       Text(
@@ -398,5 +401,24 @@ class UserPost extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void _addLikeNotification() async {
+    bool isNotMe = currentUserId() != post!.ownerId;
+    if (isNotMe) {
+      DocumentSnapshot doc = await usersRef.doc(currentUserId()).get();
+      if (doc.data() != null) {
+        UserModel user = UserModel.fromJson(doc.data() as Map<String, dynamic>);
+        services.addLikesToNotification(
+          "like",
+          user.username ?? '',
+          currentUserId(),
+          post!.postId ?? '',
+          post!.mediaUrl ?? '',
+          post!.ownerId ?? '',
+          user.photoUrl ?? '',
+        );
+      }
+    }
   }
 }
