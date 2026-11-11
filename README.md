@@ -1,4 +1,4 @@
-# 🔥🔥 𝗜𝓩𝓮𝓷𝔂 Social Media App  [![Twitter Follow](https://img.shields.io/twitter/follow/CharlyKeleb.svg?style=social)](https://twitter.com/CharlyKeleb)
+# 🔥🔥 𝗜𝓩𝓮𝓷𝔂 Social Media App  [![X Follow](https://img.shields.io/twitter/follow/Kal_ElSantana95.svg?style=social)]([https://x.com/](https://x.com/Kal_ElSantana95))
 
 𝗜𝓩𝓮𝓷𝔂 is a fully functional social media app with multiple features built with flutter and dart.
 
