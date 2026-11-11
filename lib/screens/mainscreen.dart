@@ -32,7 +32,7 @@ class _TabScreenState extends State<TabScreen> {
     },
     {
       'title': 'unsee',
-      'icon': Ionicons.add_circle,
+      'icon': Icons.add_circle,
       'page': Text('nes'),
       'index': 2,
     },
@@ -105,7 +105,7 @@ class _TabScreenState extends State<TabScreen> {
       width: 45.0,
       // ignore: missing_required_param
       child: FabContainer(
-        icon: Ionicons.add_outline,
+        icon: Icons.add,
         mini: true,
       ),
     );

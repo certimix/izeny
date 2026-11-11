@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' if (dart.library.html) 'dart:html';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -183,7 +181,6 @@ class FirebaseAuth {
     );
 
     if (resp.statusCode == 200 || resp.statusCode == 201) {
-      // Auto login after registration
       return await signInWithEmailAndPassword(email: email, password: password);
     } else {
       final err = jsonDecode(resp.body);
@@ -206,52 +203,55 @@ class FirebaseAuth {
 }
 
 // ----------------------------------------------------
-// Firestore Replacement Classes
+// Firestore Replacement Classes (Generic Compatible)
 // ----------------------------------------------------
-class DocumentSnapshot {
+class DocumentSnapshot<T extends Object?> {
   final String id;
+  final String collectionName;
   final Map<String, dynamic> _data;
   final bool exists;
 
-  DocumentSnapshot(this.id, this._data, {this.exists = true});
+  DocumentSnapshot(this.id, this._data, {this.exists = true, this.collectionName = 'posts'});
 
   Map<String, dynamic> data() => Map<String, dynamic>.from(_data);
+
+  DocumentReference<T> get reference => DocumentReference<T>(collectionName, id);
 
   dynamic get(String field) => _data[field];
 
   dynamic operator [](String field) => _data[field];
 }
 
-class QueryDocumentSnapshot extends DocumentSnapshot {
-  QueryDocumentSnapshot(String id, Map<String, dynamic> data) : super(id, data, exists: true);
+class QueryDocumentSnapshot<T extends Object?> extends DocumentSnapshot<T> {
+  QueryDocumentSnapshot(String id, Map<String, dynamic> data, {String collectionName = 'posts'})
+      : super(id, data, exists: true, collectionName: collectionName);
 }
 
-class QuerySnapshot {
-  final List<DocumentSnapshot> docs;
+class QuerySnapshot<T extends Object?> {
+  final List<QueryDocumentSnapshot<T>> docs;
   QuerySnapshot(this.docs);
 }
 
-class DocumentReference {
+class DocumentReference<T extends Object?> {
   final String id;
   final String collectionName;
   DocumentReference(this.collectionName, this.id);
 
-  Future<DocumentSnapshot> get() async {
+  Future<DocumentSnapshot<T>> get() async {
     try {
       final url = Uri.parse('${PBClient.instance.baseUrl}/api/collections/$collectionName/records/$id');
       final resp = await http.get(url, headers: PBClient.instance.headers);
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body) as Map<String, dynamic>;
-        return DocumentSnapshot(id, _normalizeData(data), exists: true);
+        return DocumentSnapshot<T>(id, _normalizeData(data), exists: true, collectionName: collectionName);
       }
     } catch (e) {
       debugPrint('Doc get error: $e');
     }
-    return DocumentSnapshot(id, {}, exists: false);
+    return DocumentSnapshot<T>(id, {}, exists: false, collectionName: collectionName);
   }
 
   Future<void> set(Map<String, dynamic> data) async {
-    // If it exists, update; if not, create
     try {
       final url = Uri.parse('${PBClient.instance.baseUrl}/api/collections/$collectionName/records/$id');
       final resp = await http.patch(
@@ -260,7 +260,6 @@ class DocumentReference {
         body: jsonEncode(_cleanData(data)),
       );
       if (resp.statusCode == 404) {
-        // create with this ID
         final createUrl = Uri.parse('${PBClient.instance.baseUrl}/api/collections/$collectionName/records');
         final cData = _cleanData(data);
         cData['id'] = id;
@@ -289,14 +288,14 @@ class DocumentReference {
     await http.delete(url, headers: PBClient.instance.headers);
   }
 
-  CollectionReference collection(String subCol) {
-    return CollectionReference(subCol);
+  CollectionReference<T> collection(String subCol) {
+    return CollectionReference<T>(subCol);
   }
 
-  Stream<DocumentSnapshot> snapshots() {
-    late StreamController<DocumentSnapshot> controller;
+  Stream<DocumentSnapshot<T>> snapshots() {
+    late StreamController<DocumentSnapshot<T>> controller;
     Timer? timer;
-    controller = StreamController<DocumentSnapshot>(
+    controller = StreamController<DocumentSnapshot<T>>(
       onListen: () {
         get().then((snap) {
           if (!controller.isClosed) controller.add(snap);
@@ -316,7 +315,7 @@ class DocumentReference {
   }
 }
 
-class Query {
+class Query<T extends Object?> {
   final String collectionName;
   String? sortField;
   bool isDescending = false;
@@ -325,25 +324,25 @@ class Query {
 
   Query(this.collectionName);
 
-  Query orderBy(String field, {bool descending = false}) {
+  Query<T> orderBy(String field, {bool descending = false}) {
     sortField = field;
     isDescending = descending;
     return this;
   }
 
-  Query limit(int n) {
+  Query<T> limit(int n) {
     limitCount = n;
     return this;
   }
 
-  Query where(String field, {dynamic isEqualTo, dynamic arrayContains}) {
+  Query<T> where(String field, {dynamic isEqualTo, dynamic arrayContains}) {
     if (isEqualTo != null) {
       filters.add('$field = "$isEqualTo"');
     }
     return this;
   }
 
-  Future<QuerySnapshot> get() async {
+  Future<QuerySnapshot<T>> get() async {
     try {
       final qParams = <String, String>{
         'page': '1',
@@ -364,22 +363,22 @@ class Query {
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body) as Map<String, dynamic>;
         final items = (data['items'] as List<dynamic>?) ?? [];
-        List<DocumentSnapshot> docs = items.map((it) {
+        List<QueryDocumentSnapshot<T>> docs = items.map((it) {
           final m = it as Map<String, dynamic>;
-          return DocumentSnapshot(m['id'], _normalizeData(m), exists: true);
+          return QueryDocumentSnapshot<T>(m['id'], _normalizeData(m), collectionName: collectionName);
         }).toList();
-        return QuerySnapshot(docs);
+        return QuerySnapshot<T>(docs);
       }
     } catch (e) {
       debugPrint('Query get error: $e');
     }
-    return QuerySnapshot([]);
+    return QuerySnapshot<T>([]);
   }
 
-  Stream<QuerySnapshot> snapshots() {
-    late StreamController<QuerySnapshot> controller;
+  Stream<QuerySnapshot<T>> snapshots() {
+    late StreamController<QuerySnapshot<T>> controller;
     Timer? timer;
-    controller = StreamController<QuerySnapshot>(
+    controller = StreamController<QuerySnapshot<T>>(
       onListen: () {
         get().then((snap) {
           if (!controller.isClosed) controller.add(snap);
@@ -399,15 +398,15 @@ class Query {
   }
 }
 
-class CollectionReference extends Query {
+class CollectionReference<T extends Object?> extends Query<T> {
   CollectionReference(String name) : super(name);
 
-  DocumentReference doc([String? docId]) {
+  DocumentReference<T> doc([String? docId]) {
     String id = docId ?? const Uuid().v4().replaceAll('-', '').substring(0, 15);
-    return DocumentReference(collectionName, id);
+    return DocumentReference<T>(collectionName, id);
   }
 
-  Future<DocumentReference> add(Map<String, dynamic> data) async {
+  Future<DocumentReference<T>> add(Map<String, dynamic> data) async {
     try {
       final url = Uri.parse('${PBClient.instance.baseUrl}/api/collections/$collectionName/records');
       final resp = await http.post(
@@ -417,12 +416,12 @@ class CollectionReference extends Query {
       );
       if (resp.statusCode == 200 || resp.statusCode == 201) {
         final rec = jsonDecode(resp.body) as Map<String, dynamic>;
-        return DocumentReference(collectionName, rec['id']);
+        return DocumentReference<T>(collectionName, rec['id']);
       }
     } catch (e) {
       debugPrint('Collection add error: $e');
     }
-    return DocumentReference(collectionName, const Uuid().v4().substring(0, 15));
+    return DocumentReference<T>(collectionName, const Uuid().v4().substring(0, 15));
   }
 }
 
@@ -430,7 +429,8 @@ class FirebaseFirestore {
   static final FirebaseFirestore instance = FirebaseFirestore._();
   FirebaseFirestore._();
 
-  CollectionReference collection(String name) => CollectionReference(name);
+  CollectionReference<Map<String, dynamic>> collection(String name) =>
+      CollectionReference<Map<String, dynamic>>(name);
 }
 
 // ----------------------------------------------------
@@ -456,7 +456,6 @@ class Reference {
   }
 
   Future<String> _upload(dynamic file) async {
-    // Post to storage collection or posts collection
     try {
       var request = http.MultipartRequest(
         'POST',
@@ -466,8 +465,13 @@ class Reference {
       request.fields['description'] = 'Upload';
       request.fields['owner'] = PBClient.instance.currentRecord?['id'] ?? '';
 
-      if (file is File) {
-        request.files.add(await http.MultipartFile.fromPath('media', file.path));
+      if (file != null) {
+        try {
+          final p = (file as dynamic).path;
+          if (p != null) {
+            request.files.add(await http.MultipartFile.fromPath('media', p.toString()));
+          }
+        } catch (_) {}
       }
 
       var res = await request.send();
