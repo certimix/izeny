@@ -23,10 +23,10 @@ class PostModel {
   });
   PostModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    postId = json['postId'];
-    ownerId = json['ownerId'];
+    postId = json['postId'] ?? json['id'];
+    ownerId = json['ownerId'] ?? json['owner'];
     location = json['location'];
-    username= json['username'];
+    username = json['username'];
     description = json['description'];
     mediaUrl = json['mediaUrl'];
     timestamp = json['timestamp'];

@@ -6,6 +6,7 @@ import 'package:social_media_app/chats/recent_chats.dart';
 import 'package:social_media_app/models/post.dart';
 import 'package:social_media_app/utils/constants.dart';
 import 'package:social_media_app/utils/firebase.dart';
+import 'package:social_media_app/utils/i18n.dart';
 import 'package:social_media_app/widgets/indicators.dart';
 import 'package:social_media_app/widgets/story_widget.dart';
 import 'package:social_media_app/widgets/userpost.dart';
@@ -38,25 +39,47 @@ class _FeedsState extends State<Feeds> with AutomaticKeepAliveClientMixin{
 
   @override
   Widget build(BuildContext context) {
-    print('>>>');
+    super.build(context);
     return Scaffold(
       key: scaffoldKey,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text(
-          Constants.appName,
-          style: TextStyle(
-            fontFamily: 'NotoSansMath',
-            fontWeight: FontWeight.w900,
-            fontSize: 24.0,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/logo_dark.png',
+              height: 28.0,
+              width: 28.0,
+              errorBuilder: (_, __, ___) => const SizedBox(),
+            ),
+            const SizedBox(width: 8.0),
+            Text(
+              Constants.appName,
+              style: const TextStyle(
+                fontFamily: 'NotoSansMath',
+                fontWeight: FontWeight.w900,
+                fontSize: 22.0,
+              ),
+            ),
+          ],
         ),
-        centerTitle: true,
+        centerTitle: false,
         actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.language, size: 22.0),
+            tooltip: 'Idioma / Language / Idioma',
+            onSelected: (lang) => I18n.setLang(lang),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'pt', child: Text('🇧🇷 Português')),
+              PopupMenuItem(value: 'en', child: Text('🇺🇸 English')),
+              PopupMenuItem(value: 'es', child: Text('🇪🇸 Español')),
+            ],
+          ),
           IconButton(
-            icon: Icon(
+            icon: const Icon(
               CupertinoIcons.chat_bubble_2_fill,
-              size: 26.0,
+              size: 24.0,
             ),
             onPressed: () {
               Navigator.push(
@@ -67,62 +90,66 @@ class _FeedsState extends State<Feeds> with AutomaticKeepAliveClientMixin{
               );
             },
           ),
-          SizedBox(width: 20.0),
+          const SizedBox(width: 10.0),
         ],
       ),
       body: RefreshIndicator(
         color: Theme.of(context).colorScheme.secondary,
         onRefresh: () =>
             postRef.orderBy('timestamp', descending: true).limit(page).get(),
-        child: SingleChildScrollView(
-          // controller: scrollController,
-          physics: NeverScrollableScrollPhysics(),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              StoryWidget(),
-              Container(
-                height: MediaQuery.of(context).size.height,
-                child: FutureBuilder(
-                  future: postRef
-                      .orderBy('timestamp', descending: true)
-                      .limit(page)
-                      .get(),
-                  builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                    if (snapshot.hasData) {
-                      var snap = snapshot.data;
-                      List docs = snap!.docs;
-                      return ListView.builder(
-                        controller: scrollController,
-                        itemCount: docs.length,
-                        shrinkWrap: true,
-                        itemBuilder: (context, index) {
-                          PostModel posts =
-                              PostModel.fromJson(docs[index].data());
-                          return Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: UserPost(post: posts),
-                          );
-                        },
-                      );
-                    } else if (snapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return circularProgress(context);
-                    } else
-                      return Center(
-                        child: Text(
-                          'No Feeds',
-                          style: TextStyle(
-                            fontSize: 26.0,
-                            fontWeight: FontWeight.bold,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: FutureBuilder(
+              future: postRef
+                  .orderBy('timestamp', descending: true)
+                  .limit(page)
+                  .get(),
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasData) {
+                  var snap = snapshot.data;
+                  List docs = snap!.docs;
+                  if (docs.isEmpty) {
+                    return ListView(
+                      children: [
+                        StoryWidget(),
+                        const SizedBox(height: 40),
+                        Center(
+                          child: Text(
+                            I18n.t('no_posts'),
+                            style: TextStyle(color: Colors.grey[600], fontSize: 14),
                           ),
                         ),
+                      ],
+                    );
+                  }
+                  return ListView.builder(
+                    controller: scrollController,
+                    itemCount: docs.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return StoryWidget();
+                      }
+                      PostModel posts =
+                          PostModel.fromJson(docs[index - 1].data());
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                        child: UserPost(post: posts),
                       );
-                  },
-                ),
-              ),
-            ],
+                    },
+                  );
+                } else if (snapshot.connectionState == ConnectionState.waiting) {
+                  return circularProgress(context);
+                } else {
+                  return Center(
+                    child: Text(
+                      I18n.t('no_posts'),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    ),
+                  );
+                }
+              },
+            ),
           ),
         ),
       ),

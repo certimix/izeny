@@ -24,7 +24,7 @@ class UserPost extends StatelessWidget {
   final DateTime timestamp = DateTime.now();
 
   currentUserId() {
-    return firebaseAuth.currentUser!.uid;
+    return firebaseAuth.currentUser?.uid ?? '';
   }
 
   final PostService services = PostService();
@@ -160,7 +160,7 @@ class UserPost extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.all(3.0),
                           child: Text(
-                            timeago.format(post!.timestamp!.toDate()),
+                            timeago.format(post?.timestamp?.toDate() ?? DateTime.now()),
                             style: TextStyle(fontSize: 10.0),
                           ),
                         ),

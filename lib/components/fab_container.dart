@@ -61,7 +61,7 @@ class FabContainer extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10.0),
                 child: Center(
                   child: Text(
-                    'Choose Upload',
+                    'Nova Publicação',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -73,10 +73,10 @@ class FabContainer extends StatelessWidget {
               Divider(),
               ListTile(
                 leading: Icon(
-                  CupertinoIcons.camera_on_rectangle,
+                  CupertinoIcons.photo_on_rectangle,
                   size: 25.0,
                 ),
-                title: Text('Make a post'),
+                title: Text('Criar Post no Feed'),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.of(context).push(
@@ -88,14 +88,12 @@ class FabContainer extends StatelessWidget {
               ),
               ListTile(
                 leading: Icon(
-                  CupertinoIcons.camera_on_rectangle,
+                  CupertinoIcons.camera_fill,
                   size: 25.0,
                 ),
-                title: Text('Add to story'),
+                title: Text('Adicionar aos Stories'),
                 onTap: () async {
-                  // Navigator.pop(context);
                   await viewModel.pickImage(context: context);
-
                 },
               ),
             ],

@@ -2,8 +2,8 @@ import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:social_media_app/auth/login/login.dart';
 import 'package:social_media_app/components/life_cycle_event_handler.dart';
-import 'package:social_media_app/landing/landing_page.dart';
 import 'package:social_media_app/screens/mainscreen.dart';
 import 'package:social_media_app/services/user_service.dart';
 import 'package:social_media_app/utils/config.dart';
@@ -51,8 +51,9 @@ class _MyAppState extends State<MyApp> {
               builder: ((BuildContext context, snapshot) {
                 if (snapshot.hasData) {
                   return TabScreen();
-                } else
-                  return Landing();
+                } else {
+                  return Login();
+                }
               }),
             ),
           );
@@ -69,4 +70,3 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
-

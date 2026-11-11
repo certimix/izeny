@@ -18,7 +18,7 @@ class StoryWidget extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(left: 5.0),
         child: StreamBuilder<QuerySnapshot>(
-          stream: userChatsStream('${firebaseAuth.currentUser!.uid}'),
+          stream: userChatsStream('${(firebaseAuth.currentUser?.uid ?? '')}'),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               List chatList = snapshot.data!.docs;
@@ -41,7 +41,7 @@ class StoryWidget extends StatelessWidget {
                           List users = statusListSnapshot.get('whoCanSee');
                           // remove the current user's id from the Users
                           // list so we can get the rest of the user's id
-                          users.remove('${firebaseAuth.currentUser!.uid}');
+                          users.remove('${(firebaseAuth.currentUser?.uid ?? '')}');
                           return _buildStatusAvatar(
                               statusListSnapshot.get('userId'),
                               statusListSnapshot.id,
