@@ -361,23 +361,6 @@ class UserPost extends StatelessWidget {
             },
           ),
         ),
-                      ),
-                      const SizedBox(width: 4.0),
-                      Text(
-                        "$likeCount",
-                        style: TextStyle(
-                          fontSize: 12.0,
-                          color: isLiked ? const Color(0xffe11d48) : Colors.grey[600],
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-        ),
 
         // 3. Share / Copy Link Button
         InkWell(
