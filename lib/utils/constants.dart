@@ -23,6 +23,7 @@ class Constants {
       cursorColor: lightAccent,
     ),
     scaffoldBackgroundColor: lightBG,
+    fontFamilyFallback: const ['NotoSansMath'],
     bottomAppBarTheme: BottomAppBarTheme(
       elevation: 0,
       color: lightBG,
@@ -36,10 +37,11 @@ class Constants {
         fontSize: 20.0,
         fontWeight: FontWeight.w700,
       ),
-      titleTextStyle: GoogleFonts.nunito(
+      titleTextStyle: TextStyle(
+        fontFamily: 'NotoSansMath',
         color: Colors.black,
-        fontSize: 20.0,
-        fontWeight: FontWeight.w700,
+        fontSize: 22.0,
+        fontWeight: FontWeight.w900,
       ),
     ),
     colorScheme: ColorScheme.fromSwatch().copyWith(
@@ -49,6 +51,7 @@ class Constants {
 
   static ThemeData darkTheme = ThemeData(
     iconTheme: const IconThemeData(color: Colors.white),
+    fontFamilyFallback: const ['NotoSansMath'],
     colorScheme: ColorScheme.fromSwatch(
       accentColor: darkAccent,
     ).copyWith(
@@ -74,10 +77,11 @@ class Constants {
         fontSize: 20.0,
         fontWeight: FontWeight.w700,
       ),
-      titleTextStyle: GoogleFonts.nunito(
+      titleTextStyle: TextStyle(
+        fontFamily: 'NotoSansMath',
         color: Colors.white,
-        fontSize: 20.0,
-        fontWeight: FontWeight.w700,
+        fontSize: 22.0,
+        fontWeight: FontWeight.w900,
       ),
     ),
   );

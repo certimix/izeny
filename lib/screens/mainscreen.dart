@@ -20,13 +20,13 @@ class _TabScreenState extends State<TabScreen> {
   List pages = [
     {
       'title': 'Home',
-      'icon': Ionicons.home,
+      'icon': CupertinoIcons.house_fill,
       'page': Feeds(),
       'index': 0,
     },
     {
       'title': 'Search',
-      'icon': Ionicons.search,
+      'icon': CupertinoIcons.search,
       'page': Search(),
       'index': 1,
     },

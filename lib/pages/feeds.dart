@@ -46,15 +46,17 @@ class _FeedsState extends State<Feeds> with AutomaticKeepAliveClientMixin{
         title: Text(
           Constants.appName,
           style: TextStyle(
+            fontFamily: 'NotoSansMath',
             fontWeight: FontWeight.w900,
+            fontSize: 24.0,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(
-              Ionicons.chatbubble_ellipses,
-              size: 30.0,
+              CupertinoIcons.chat_bubble_2_fill,
+              size: 26.0,
             ),
             onPressed: () {
               Navigator.push(

@@ -75,7 +75,9 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin {
         title: Text(
           Constants.appName,
           style: TextStyle(
+            fontFamily: 'NotoSansMath',
             fontWeight: FontWeight.w900,
+            fontSize: 24.0,
           ),
         ),
         centerTitle: true,

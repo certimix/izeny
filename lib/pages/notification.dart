@@ -20,7 +20,7 @@ class _ActivitiesState extends State<Activities> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text('Notifications'),
+        title: Text('Notificações'),
         centerTitle: true,
         actions: [
           Padding(
@@ -28,7 +28,7 @@ class _ActivitiesState extends State<Activities> {
             child: GestureDetector(
               onTap: () => deleteAllItems(),
               child: Text(
-                'CLEAR',
+                'LIMPAR',
                 style: TextStyle(
                   fontSize: 13.0,
                   fontWeight: FontWeight.w900,
