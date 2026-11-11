@@ -1,110 +1,78 @@
-# 🔥🔥 𝗜𝓩𝓮𝓷𝔂 Social Media App  [![X Follow](https://img.shields.io/twitter/follow/Kal_ElSantana95.svg?style=social)]([https://x.com/](https://x.com/Kal_ElSantana95))
+# 𝗜𝓩𝓮𝓷𝔂 - Rede Social, Comunidade & Suporte ZenyDesk
 
-𝗜𝓩𝓮𝓷𝔂 is a fully functional social media app with multiple features built with flutter and dart.
+Rede social, mensageria e comunidade oficial do ecossistema **ZenyDesk**, projetada para conectar técnicos, clientes, empresas e parceiros em um ambiente moderno, ágil e em tempo real.
 
-Star⭐ the repo if you like what you see😉.
+Disponível para uso direto no navegador (**Web**) e aplicativo nativo (**Android**):
+* **Web**: [https://izeny.zenydesk.com/](https://izeny.zenydesk.com/)
+* **Painel de Moderação / Backend**: [https://izeny.zenydesk.com/_/](https://izeny.zenydesk.com/_/)
+* **Download APK Android**: [https://izeny.zenydesk.com/downloads/IZeny.apk](https://izeny.zenydesk.com/downloads/IZeny.apk)
 
-## ✨ Requirements
+---
 
-* Any Operating System (ie. MacOS X, Linux, Windows)
-* Any IDE with Flutter SDK installed (ie. IntelliJ, Android Studio, VSCode etc)
-* A little knowledge of Dart and Flutter
-* A brain to think 🤓🤓
-
-## Features
-
-* Custom photo feed
-* Post photo posts from camera or gallery
-    * Like posts
-    * Comment on posts
-        * View all comments on a post
-* Search for users
-* Realtime Messaging and Sending images
-* Deleting Posts
-* Profile Pages
-    * Change profile picture
-    * Change username
-    * Follow / Unfollow Users
-    * Change image view from grid layout to feed layout
-    * Add your own bio
-* Notifications Feed showing recent likes / comments of your posts + new followers
-* Swipe to delete notification
-* Dark Mode Support
-* Stories/Status
-* Used Provider to manage state
-
-## Screenshots
-
-<p>
-<img src="ss/w1.png" width="400"/> <img src="ss/w2.png" width="400"/>
-<img src="ss/w3.png" width="400"> <img src="ss/w4.png" width="400">
-<img src="ss/w5.png" width="400"> <img src="ss/w6.png" width="400">
-<img src="ss/w7.png" width="400"> <img src="ss/w8.png" width="400">
-<img src="ss/w9.png" width="400"> <img src="ss/w10.png" width="400">
-<img src="ss/w11.png" width="400"> <img src="ss/w12.png" width="400">
-<img src="ss/w13.png" width="400"> <img src="ss/w14.png" width="400">
-<img src="ss/w15.png" width="400"> <img src="ss/w16.png" width="400">
-<img src="ss/w17.png" width="400"> <img src="ss/w18.png" width="400">
-
-
-</p>
-
-## Installation
-
-#### 1. [Setup Flutter](https://flutter.dev/docs/get-started/install)
-
-#### 2. Clone the repo
-
-#### 3. Setup the firebase app
-
-- You'll need to create a Firebase instance. Follow the instructions
-  at https://console.firebase.google.com.
-- Once your Firebase instance is created, you'll need to enable Google authentication.
-
-* Go to the Firebase Console for your new instance.
-* Click "Authentication" in the left-hand menu
-* Click the "sign-in method" tab
-* Click "Email and Password" and enable it
-* Create an app within your Firebase instance for Android, with package name com.yourcompany.news
-* Run the following command to get your SHA-1 key:
+## 🏛️ Arquitetura do Sistema
 
 ```
-keytool -exportcert -list -v \
--alias androiddebugkey -keystore ~/.android/debug.keystore
+                      +-----------------------------+
+                      |       Clientes & Usuários   |
+                      +--------------+--------------+
+                                     |
+               +---------------------+---------------------+
+               |                                           |
+        [ Flutter Web ]                            [ Flutter Android ]
+    (izeny.zenydesk.com)                              (IZeny.apk)
+               |                                           |
+               +---------------------+---------------------+
+                                     |  HTTPS / WSS / REST
+                                     v
+                      +-----------------------------+
+                      |         Nginx (VPS)         |
+                      |   Proxy Reverso & SSL Let's |
+                      +--------------+--------------+
+                                     |
+               +---------------------+---------------------+
+               |                                           |
+               v                                           v
+    [ PocketBase Backend ]                      [ IZeny Auth Service ]
+    (Porta 8090 - SQLite + SSE)                 (Porta 8095 - Node.js)
+    - Coleções: users, posts,                   - Google OAuth 2.0 GIS
+      comments, chats, messages,                - Redefinição de Senha
+      likes, follows, notifications             - Integração Superuser
 ```
 
-* In the Firebase console, in the settings of your Android app, add your SHA-1 key by clicking "Add
-  Fingerprint".
-* Follow instructions to download google-services.json
-* place `google-services.json` into `/android/app/`.
+---
 
-- (skip if not running on iOS)
+## 📱 Recursos e Módulos Principais
 
-* Create an app within your Firebase instance for iOS, with your app package name
-* Follow instructions to download GoogleService-Info.plist
-* Open XCode, right click the Runner folder, select the "Add Files to 'Runner'" menu, and select the
-  GoogleService-Info.plist file to add it to /ios/Runner in XCode
-* Open /ios/Runner/Info.plist in a text editor. Locate the CFBundleURLSchemes key. The second item
-  in the array value of this key is specific to the Firebase instance. Replace it with the value for
-  REVERSED_CLIENT_ID from GoogleService-Info.plist
+### 1. Feed e Networking (Inspirado em 3 Colunas)
+* **Barra Lateral Esquerda**: Logomarca oficial transparente, navegação rápida entre Feed, Mensagens, Buscar, Notificações e Perfil.
+* **Feed Central**: Criação de publicações com texto, fotos e vídeos. Suporte a curtidas e comentários em tempo real.
+* **Painel Lateral Direito**: Acesso rápido a técnicos parceiros e links diretos para os módulos do ecossistema ZenyDesk (ZenyDesk O.S., ZenyDesk ERP, etc.).
 
-Double check install instructions for both
+### 2. Módulo de Mensageria em Tempo Real
+* Bate-papo privativo entre técnicos e clientes.
+* Envio de mensagens de texto, imagens e gravações de áudio/voz.
+* Player de áudio embutido diretamente nos balões de chat.
 
-- Google Auth Plugin
-    - https://pub.dartlang.org/packages/firebase_auth
-- Firestore Plugin
-    - https://pub.dartlang.org/packages/cloud_firestore
+### 3. Autenticação e Segurança
+* **E-mail e Senha**: Validação defensiva com mensagens em português e foco em usabilidade.
+* **Google OAuth 2.0**: Botão oficial no padrão visual Google Identity Services.
+* **Redefinição de Senha Segura**: Modal interativo que atualiza as credenciais diretamente no banco com validação de força.
+* **Multilíngue Nativo**: Suporte imediato a Português (🇧🇷), Inglês (🇺🇸) e Espanhol (🇪🇸).
 
-# What's Next?
-- [] Video Calling
-- [] Reels
-- [] Sending and Uploading Videos(Video Compatibility)
+---
 
-# Note
-  - The stories feature is ready, you can write a cloud scheduler function to auto delete stories
-    after 24hrs as cloud functions is not enabled in this project
+## 🚀 Compilação e Deploy Contínuo (CI/CD)
 
-## 🤓 Author(s)
-(https://x.com/Kal_ElSantana95)
- 
-  [![X Follow](https://img.shields.io/twitter/follow/Kal_ElSantana95.svg?style=social)]([https://x.com/](https://x.com/Kal_ElSantana95))
+Todo o processo de build é automatizado via **GitHub Actions** em ambiente isolado de nuvem:
+
+1. **Commit na branch `main`**: Dispara automaticamente o pipeline de compilação.
+2. **Flutter 3.0.5**: Compila a versão Web otimizada e o pacote Android Release (`IZeny.apk`).
+3. **GitHub Releases**: Gera a tag versionada (`v1.0.X`) com os binários anexados.
+4. **Deploy na VPS**: O script `/tmp/deploy_izeny_v15.sh` extrai os assets em `/var/www/izeny/web/` e disponibiliza o APK para download público com permissões seguras `www-data`.
+
+---
+
+## 🛡️ Desenvolvimento & Governança
+
+* **Ecossistema**: ZenyDesk
+* **Autoria Técnica**: [AORDIC.COM.BR](https://aordic.com.br)

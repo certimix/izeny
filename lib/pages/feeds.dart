@@ -46,24 +46,13 @@ class _FeedsState extends State<Feeds> with AutomaticKeepAliveClientMixin{
       key: scaffoldKey,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/images/logo_dark.png',
-              height: 28.0,
-              width: 28.0,
-              errorBuilder: (_, __, ___) => const SizedBox(),
-            ),
-            const SizedBox(width: 8.0),
-            Text(
-              Constants.appName,
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 22.0,
-              ),
-            ),
-          ],
+        title: const Text(
+          'Feed',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 20.0,
+            letterSpacing: -0.3,
+          ),
         ),
         centerTitle: false,
         actions: [

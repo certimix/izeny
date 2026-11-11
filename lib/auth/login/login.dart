@@ -298,33 +298,49 @@ class _LoginState extends State<Login> {
           ),
           const SizedBox(height: 18.0),
 
-          // Google Login Button (Fully Integrated)
+          // Official Google Sign-In Button (4-Color Logo & Elevation)
           Container(
-            height: 44.0,
+            height: 48.0,
             width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                primary: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(color: const Color(0xFFDADCE0), width: 1.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
                 ),
-                elevation: 0,
-              ),
-              onPressed: () => viewModel.loginWithGoogle(context),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.g_mobiledata, color: Color(0xFF4285F4), size: 30),
-                  const SizedBox(width: 8.0),
-                  Text(
-                    I18n.t('google_continue'),
-                    style: const TextStyle(
-                      color: Color(0xFF1E293B),
-                      fontSize: 13.0,
-                      fontWeight: FontWeight.w700,
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8.0),
+                onTap: () => viewModel.loginWithGoogle(context),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/google_logo.png',
+                      height: 22.0,
+                      width: 22.0,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, color: Color(0xFF4285F4), size: 28),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12.0),
+                    Text(
+                      I18n.t('google_continue'),
+                      style: const TextStyle(
+                        color: Color(0xFF3C4043),
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
