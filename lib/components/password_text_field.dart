@@ -52,9 +52,6 @@ class _PasswordFormBuilderState extends State<PasswordFormBuilder> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CustomCard(
-            onTap: () {
-              print('clicked');
-            },
             borderRadius: BorderRadius.circular(40.0),
             child: Container(
               child: Theme(

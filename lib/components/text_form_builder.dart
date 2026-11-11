@@ -50,9 +50,6 @@ class _TextFormBuilderState extends State<TextFormBuilder> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CustomCard(
-            onTap: () {
-              print('clicked');
-            },
             borderRadius: BorderRadius.circular(40.0),
             child: Container(
               child: Theme(
