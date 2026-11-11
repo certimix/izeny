@@ -16,6 +16,15 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   bool _obscurePassword = true;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,13 +60,13 @@ class _LoginState extends State<Login> {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  // Left side: Welcome greeting, illustration, bullet points
+                                  // Left side: Greeting, illustration, bullets (inspired by os.zenydesk.com/index.php/login)
                                   Expanded(
                                     flex: 6,
                                     child: _buildLeftWelcomePane(context),
                                   ),
                                   const SizedBox(width: 48.0),
-                                  // Right side: Dark card with logo, language selector, form
+                                  // Right side: Dark card with logo, language selector, form, Google login
                                   ConstrainedBox(
                                     constraints: const BoxConstraints(maxWidth: 420),
                                     child: _buildDarkCard(context, viewModel),
@@ -154,8 +163,8 @@ class _LoginState extends State<Login> {
         const SizedBox(height: 20.0),
         Center(
           child: Image.asset(
-            'assets/images/logo_dark.png',
-            height: compact ? 80.0 : 120.0,
+            'assets/images/login.png',
+            height: compact ? 160.0 : 260.0,
             fit: BoxFit.contain,
           ),
         ),
@@ -225,10 +234,10 @@ class _LoginState extends State<Login> {
           _buildLanguageSelector(),
           const SizedBox(height: 20.0),
 
-          // Official White Logo
+          // Official White Transparent Logo
           Image.asset(
             'assets/images/logo_white.png',
-            height: 56.0,
+            height: 48.0,
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 24.0),
@@ -239,7 +248,7 @@ class _LoginState extends State<Login> {
 
           // Links: Forgot Password & Register
           GestureDetector(
-            onTap: () => viewModel.forgotPassword(context),
+            onTap: () => _showForgotPasswordDialog(context, viewModel),
             child: Text(
               I18n.t('forgot_pass'),
               style: const TextStyle(
@@ -289,7 +298,7 @@ class _LoginState extends State<Login> {
           ),
           const SizedBox(height: 18.0),
 
-          // Google Login Button
+          // Google Login Button (Fully Integrated)
           Container(
             height: 44.0,
             width: double.infinity,
@@ -301,17 +310,11 @@ class _LoginState extends State<Login> {
                 ),
                 elevation: 0,
               ),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Login com Google em integração. Acesse com seu e-mail e senha.'),
-                  ),
-                );
-              },
+              onPressed: () => viewModel.loginWithGoogle(context),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.g_mobiledata, color: Color(0xFF4285F4), size: 28),
+                  const Icon(Icons.g_mobiledata, color: Color(0xFF4285F4), size: 30),
                   const SizedBox(width: 8.0),
                   Text(
                     I18n.t('google_continue'),
@@ -398,7 +401,9 @@ class _LoginState extends State<Login> {
   Widget _buildForm(BuildContext context, LoginViewModel viewModel) {
     return Form(
       key: viewModel.formKey,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
+      autovalidateMode: viewModel.validate
+          ? AutovalidateMode.onUserInteraction
+          : AutovalidateMode.disabled,
       child: Column(
         children: [
           // Email input
@@ -408,6 +413,7 @@ class _LoginState extends State<Login> {
               borderRadius: BorderRadius.circular(8.0),
             ),
             child: TextFormField(
+              controller: _emailController,
               enabled: !viewModel.loading,
               focusNode: viewModel.emailFN,
               keyboardType: TextInputType.emailAddress,
@@ -435,6 +441,7 @@ class _LoginState extends State<Login> {
               borderRadius: BorderRadius.circular(8.0),
             ),
             child: TextFormField(
+              controller: _passwordController,
               enabled: !viewModel.loading,
               focusNode: viewModel.passFN,
               obscureText: _obscurePassword,
@@ -494,6 +501,179 @@ class _LoginState extends State<Login> {
           ),
         ],
       ),
+    );
+  }
+
+  // Interactive Forgot Password Dialog
+  void _showForgotPasswordDialog(BuildContext context, LoginViewModel viewModel) {
+    final emailDlgController = TextEditingController(text: _emailController.text);
+    final newPassDlgController = TextEditingController();
+    final confirmPassDlgController = TextEditingController();
+    bool dlgObscure = true;
+    bool dlgLoading = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dlgContext) {
+        return StatefulBuilder(
+          builder: (context, setDlgState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF232733),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+              title: Row(
+                children: const [
+                  Icon(Icons.lock_reset, color: Color(0xFFFF7A00), size: 24),
+                  SizedBox(width: 8),
+                  Text(
+                    'Redefinir Senha',
+                    style: TextStyle(color: Colors.white, fontSize: 18.0, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 380),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Informe seu e-mail cadastrado e defina sua nova senha de acesso.',
+                        style: TextStyle(color: Colors.white70, fontSize: 13.0),
+                      ),
+                      const SizedBox(height: 16.0),
+
+                      // Email input
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: TextField(
+                          controller: emailDlgController,
+                          keyboardType: TextInputType.emailAddress,
+                          style: const TextStyle(color: Color(0xFF1E293B), fontSize: 13.5),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            prefixIcon: const Icon(Icons.email, color: Color(0xFFFF7A00), size: 20),
+                            hintText: 'Seu e-mail cadastrado',
+                            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13.0),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12.0),
+
+                      // New password
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: TextField(
+                          controller: newPassDlgController,
+                          obscureText: dlgObscure,
+                          style: const TextStyle(color: Color(0xFF1E293B), fontSize: 13.5),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            prefixIcon: const Icon(Icons.lock, color: Color(0xFFFF7A00), size: 20),
+                            suffixIcon: IconButton(
+                              icon: Icon(dlgObscure ? Icons.visibility_off : Icons.visibility, size: 18, color: Colors.grey[600]),
+                              onPressed: () => setDlgState(() => dlgObscure = !dlgObscure),
+                            ),
+                            hintText: 'Nova senha (mínimo 6 caracteres)',
+                            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13.0),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12.0),
+
+                      // Confirm password
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: TextField(
+                          controller: confirmPassDlgController,
+                          obscureText: dlgObscure,
+                          style: const TextStyle(color: Color(0xFF1E293B), fontSize: 13.5),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            prefixIcon: const Icon(Icons.check_circle_outline, color: Color(0xFFFF7A00), size: 20),
+                            hintText: 'Confirme a nova senha',
+                            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13.0),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dlgContext).pop(),
+                  child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: const Color(0xFFFF7A00),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  ),
+                  onPressed: dlgLoading
+                      ? null
+                      : () async {
+                          final emailVal = emailDlgController.text.trim();
+                          final newPassVal = newPassDlgController.text.trim();
+                          final confirmPassVal = confirmPassDlgController.text.trim();
+
+                          if (emailVal.isEmpty) {
+                            viewModel.showInSnackBar('Informe seu e-mail.', context);
+                            return;
+                          }
+                          if (newPassVal.length < 6) {
+                            viewModel.showInSnackBar('A nova senha deve ter no mínimo 6 caracteres.', context);
+                            return;
+                          }
+                          if (newPassVal != confirmPassVal) {
+                            viewModel.showInSnackBar('As senhas não coincidem.', context);
+                            return;
+                          }
+
+                          setDlgState(() => dlgLoading = true);
+                          bool ok = await viewModel.resetPassword(
+                            context: context,
+                            email: emailVal,
+                            newPassword: newPassVal,
+                            confirmPassword: confirmPassVal,
+                          );
+                          setDlgState(() => dlgLoading = false);
+
+                          if (ok) {
+                            Navigator.of(dlgContext).pop();
+                            _emailController.text = emailVal;
+                            _passwordController.text = newPassVal;
+                            viewModel.setEmail(emailVal);
+                            viewModel.setPassword(newPassVal);
+                            viewModel.showInSnackBar('Senha alterada com sucesso! Você já pode acessar.', context);
+                          }
+                        },
+                  child: dlgLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                        )
+                      : const Text('Redefinir Senha', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

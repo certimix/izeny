@@ -5,7 +5,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Rede social, comunidade e suporte técnico ZenyDesk">
+  <meta name="description" content="Rede social, comunidade e suporte técnico ZenyDesk.">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,10 +19,84 @@
   <title>IZeny - Comunidade &amp; Suporte ZenyDesk</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- Google Identity Services (GIS) for Google Sign-In -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <script>
     // The value below is injected by flutter build, do not touch.
     var serviceWorkerVersion = null;
+
+    // Global Google Sign-In Bridge for Flutter Web
+    window.izenyGoogleAuth = function(onSuccess, onError) {
+      if (!window.google || !window.google.accounts) {
+        if (onError) onError('Google Identity Services ainda carregando. Aguarde 2 segundos e tente novamente.');
+        return;
+      }
+      try {
+        if (window.google.accounts.oauth2) {
+          const client = google.accounts.oauth2.initTokenClient({
+            client_id: '615444982313-dvtl6p7jtb7smte977430comtvu118ge.apps.googleusercontent.com',
+            scope: 'email profile openid',
+            callback: async function(tokenResponse) {
+              if (tokenResponse && tokenResponse.access_token) {
+                try {
+                  const res = await fetch('https://izeny.zenydesk.com/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: tokenResponse.access_token })
+                  });
+                  const data = await res.json();
+                  if (!res.ok) {
+                    if (onError) onError(data.error || 'Falha na autenticação com Google');
+                    return;
+                  }
+                  if (onSuccess) onSuccess(JSON.stringify(data));
+                } catch (err) {
+                  if (onError) onError(err.toString());
+                }
+              } else if (tokenResponse && tokenResponse.error) {
+                if (onError) onError('Login com Google cancelado ou não autorizado.');
+              }
+            }
+          });
+          client.requestAccessToken({ prompt: 'select_account' });
+          return;
+        }
+
+        // Fallback to id.initialize and prompt
+        if (window.google.accounts.id) {
+          google.accounts.id.initialize({
+            client_id: '615444982313-dvtl6p7jtb7smte977430comtvu118ge.apps.googleusercontent.com',
+            callback: async function(response) {
+              if (response && response.credential) {
+                try {
+                  const res = await fetch('https://izeny.zenydesk.com/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: response.credential })
+                  });
+                  const data = await res.json();
+                  if (!res.ok) {
+                    if (onError) onError(data.error || 'Falha na autenticação com Google');
+                    return;
+                  }
+                  if (onSuccess) onSuccess(JSON.stringify(data));
+                } catch (err) {
+                  if (onError) onError(err.toString());
+                }
+              }
+            },
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+          google.accounts.id.prompt();
+        }
+      } catch (e) {
+        if (onError) onError(e.toString());
+      }
+    };
   </script>
+
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
 </head>

@@ -1,6 +1,8 @@
-import 'package:social_media_app/pocketbase/pb_compat.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:social_media_app/utils/firebase.dart';
+import 'package:social_media_app/utils/google_auth_helper.dart';
 
 class AuthService {
   User getCurrentUser() {
@@ -8,7 +10,7 @@ class AuthService {
     return user;
   }
 
-//create a firebase user
+  // Create user
   Future<bool> createUser(
       {String? name,
       User? user,
@@ -27,7 +29,6 @@ class AuthService {
     }
   }
 
-//this will save the details inputted by the user to firestore.
   saveUserToFirestore(
       String name, User user, String email, String country) async {
     await usersRef.doc(user.uid).set({
@@ -42,10 +43,10 @@ class AuthService {
     });
   }
 
-//function to login a user with his email and password
+  // Login with email and password
   Future<bool> loginUser({String? email, String? password}) async {
     var res = await firebaseAuth.signInWithEmailAndPassword(
-      email: '$email',
+      email: '${email?.trim()}',
       password: '$password',
     );
 
@@ -56,8 +57,50 @@ class AuthService {
     }
   }
 
+  // Login with Google OAuth
+  Future<bool> loginWithGoogle() async {
+    final resultStr = await triggerGoogleAuth();
+    if (resultStr == null || resultStr.isEmpty) {
+      return false;
+    }
+    final data = jsonDecode(resultStr) as Map<String, dynamic>;
+    final token = data['token'] as String?;
+    final record = data['record'] as Map<String, dynamic>?;
+
+    if (token != null && record != null) {
+      await PBClient.instance.saveAuth(token, record);
+      return true;
+    }
+    return false;
+  }
+
+  // Direct password reset via microservice
+  Future<bool> resetPassword({
+    required String email,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final url = Uri.parse('${PBClient.instance.baseUrl}/api/auth/reset-password');
+    final resp = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email.trim(),
+        'newPassword': newPassword,
+        'newPasswordConfirm': confirmPassword,
+      }),
+    );
+
+    if (resp.statusCode == 200) {
+      return true;
+    } else {
+      final err = jsonDecode(resp.body);
+      throw Exception(err['error'] ?? 'Erro ao redefinir senha.');
+    }
+  }
+
   forgotPassword(String email) async {
-    await firebaseAuth.sendPasswordResetEmail(email: email);
+    await firebaseAuth.sendPasswordResetEmail(email: email.trim());
   }
 
   logOut() async {
@@ -65,26 +108,25 @@ class AuthService {
   }
 
   String handleFirebaseAuthError(String e) {
-    if (e.contains("ERROR_WEAK_PASSWORD")) {
-      return "Password is too weak";
+    if (e.contains("ERROR_WEAK_PASSWORD") || e.contains("weak-password")) {
+      return "A senha é muito fraca. Escolha outra.";
     } else if (e.contains("invalid-email")) {
-      return "Invalid Email";
+      return "Formato de e-mail inválido.";
     } else if (e.contains("ERROR_EMAIL_ALREADY_IN_USE") ||
         e.contains('email-already-in-use')) {
-      return "The email address is already in use by another account.";
+      return "Este e-mail já está em uso por outra conta.";
     } else if (e.contains("ERROR_NETWORK_REQUEST_FAILED")) {
-      return "Network error occured!";
+      return "Erro de conexão de rede. Verifique sua internet.";
     } else if (e.contains("ERROR_USER_NOT_FOUND") ||
-        e.contains('firebase_auth/user-not-found')) {
-      return "Invalid credentials.";
-    } else if (e.contains("ERROR_WRONG_PASSWORD") ||
-        e.contains('wrong-password')) {
-      return "Invalid credentials.";
+        e.contains('firebase_auth/user-not-found') ||
+        e.contains('wrong-password') ||
+        e.contains('Credenciais inválidas') ||
+        e.contains('Failed to authenticate')) {
+      return "E-mail ou senha incorretos. Verifique suas credenciais.";
     } else if (e.contains('firebase_auth/requires-recent-login')) {
-      return 'This operation is sensitive and requires recent authentication.'
-          ' Log in again before retrying this request.';
+      return 'Esta operação requer autenticação recente. Faça login novamente.';
     } else {
-      return e;
+      return e.replaceAll('Exception:', '').trim();
     }
   }
 }

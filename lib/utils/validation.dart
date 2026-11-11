@@ -1,21 +1,25 @@
 class Validations {
   static String? validateName(String? value) {
-    if (value!.isEmpty) return 'Username is Required.';
-    final RegExp nameExp = new RegExp(r'^[A-za-zğüşöçİĞÜŞÖÇ ]+$');
-    if (!nameExp.hasMatch(value))
-      return 'Please enter only alphabetical characters.';
+    if (value == null || value.trim().isEmpty) return 'Nome é obrigatório.';
+    return null;
   }
 
-  static String? validateEmail(String? value, [bool isRequried = true]) {
-    if (value!.isEmpty && isRequried) return 'Email is required.';
-    final RegExp nameExp = new RegExp(
+  static String? validateEmail(String? value, [bool isRequired = true]) {
+    final v = (value ?? '').trim();
+    if (v.isEmpty && isRequired) return 'E-mail é obrigatório.';
+    final RegExp emailExp = RegExp(
         r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?)*$");
-    if (!nameExp.hasMatch(value) && isRequried)
-      return 'Invalid email address';
+    if (!emailExp.hasMatch(v) && isRequired) {
+      return 'Insira um e-mail válido.';
+    }
+    return null;
   }
 
   static String? validatePassword(String? value) {
-    if (value!.isEmpty || value.length < 6)
-      return 'Please enter a valid password.';
+    final v = (value ?? '');
+    if (v.isEmpty || v.length < 6) {
+      return 'A senha deve ter no mínimo 6 caracteres.';
+    }
+    return null;
   }
 }

@@ -16,59 +16,81 @@ class LoginViewModel extends ChangeNotifier {
   AuthService auth = AuthService();
 
   login(BuildContext context) async {
-    FormState form = formKey.currentState!;
+    validate = true;
+    notifyListeners();
+    FormState? form = formKey.currentState;
+    if (form == null) return;
     form.save();
     if (!form.validate()) {
-      validate = true;
-      notifyListeners();
-      showInSnackBar('Please fix the errors in red before submitting.',context);
-    } else {
-      loading = true;
-      notifyListeners();
-      try {
-        bool success = await auth.loginUser(
-          email: email,
-          password: password,
-        );
-        print(success);
-        if (success) {
-          Navigator.of(context).pushReplacement(
-              CupertinoPageRoute(builder: (_) => TabScreen()));
-        }
-      } catch (e) {
-        loading = false;
-        notifyListeners();
-        print(e);
-        showInSnackBar('${auth.handleFirebaseAuthError(e.toString())}',context);
-      }
-      loading = false;
-      notifyListeners();
+      showInSnackBar('Por favor, corrija os campos destacados em vermelho.', context);
+      return;
     }
-  }
 
-  forgotPassword(BuildContext context) async {
     loading = true;
     notifyListeners();
-    FormState form = formKey.currentState!;
-    form.save();
-    print(Validations.validateEmail(email));
-    if (Validations.validateEmail(email) != null) {
-      showInSnackBar('Please input a valid email to reset your password.',context);
-    } else {
-      try {
-        await auth.forgotPassword(email!);
-        showInSnackBar('Please check your email for instructions '
-            'to reset your password', context);
-      } catch (e) {
-        showInSnackBar('${e.toString()}', context);
+    try {
+      bool success = await auth.loginUser(
+        email: email?.trim(),
+        password: password,
+      );
+      if (success) {
+        Navigator.of(context).pushReplacement(
+          CupertinoPageRoute(builder: (_) => TabScreen()),
+        );
       }
+    } catch (e) {
+      loading = false;
+      notifyListeners();
+      showInSnackBar(auth.handleFirebaseAuthError(e.toString()), context);
     }
     loading = false;
     notifyListeners();
   }
 
+  loginWithGoogle(BuildContext context) async {
+    loading = true;
+    notifyListeners();
+    try {
+      bool success = await auth.loginWithGoogle();
+      if (success) {
+        Navigator.of(context).pushReplacement(
+          CupertinoPageRoute(builder: (_) => TabScreen()),
+        );
+      } else {
+        showInSnackBar('Login com Google cancelado.', context);
+      }
+    } catch (e) {
+      showInSnackBar('Erro ao conectar com Google: ${e.toString().replaceAll("Exception:", "").trim()}', context);
+    }
+    loading = false;
+    notifyListeners();
+  }
+
+  Future<bool> resetPassword({
+    required BuildContext context,
+    required String email,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      bool success = await auth.resetPassword(
+        email: email.trim(),
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
+      );
+      return success;
+    } catch (e) {
+      showInSnackBar(e.toString().replaceAll("Exception:", "").trim(), context);
+      return false;
+    }
+  }
+
+  forgotPassword(BuildContext context) async {
+    // Legacy stub - now handled via dialog
+  }
+
   setEmail(val) {
-    email = val;
+    email = val?.toString().trim();
     notifyListeners();
   }
 
@@ -77,8 +99,13 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void showInSnackBar(String value,context) {
+  void showInSnackBar(String value, BuildContext context) {
     ScaffoldMessenger.of(context).removeCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(value),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 }
