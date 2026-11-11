@@ -33,7 +33,7 @@ dependencies:
   animations: ^2.0.0
   image: ^3.0.2
   uuid: ^3.0.4
-  http: ^0.13.5
+  http: ^1.1.0
   image_picker: ^0.8.1+1
   path_provider: ^2.0.2
   geolocator: ^9.0.1
