@@ -230,7 +230,7 @@ class UserPost extends StatelessWidget {
               color: Colors.grey.withOpacity(0.12),
               child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
             ),
-            errorBuilder: (_, __, ___) => const SizedBox(),
+            errorWidget: (_, __, ___) => const SizedBox(),
           ),
         ),
       ),
