@@ -14,7 +14,7 @@ class I18n {
   static const Map<String, Map<String, dynamic>> _strings = {
     'pt': {
       'greeting': 'Olá! Bom dia, bem-vindo(a)',
-      'welcome_sub': 'À rede social, comunidade e suporte técnico 𝗜𝓩𝓮𝓷𝔂',
+      'welcome_sub': 'À rede social, comunidade e suporte técnico IZeny',
       'bullet_1': 'Conecte-se com técnicos, parceiros e clientes ZenyDesk',
       'bullet_2': 'Compartilhe novidades, fotos e laudos da sua empresa',
       'bullet_3': 'Receba suporte ágil e faça networking qualificado',
@@ -45,7 +45,7 @@ class I18n {
     },
     'en': {
       'greeting': 'Hello! Good morning, welcome',
-      'welcome_sub': 'To the 𝗜𝓩𝓮𝓷𝔂 social network, community & tech support',
+      'welcome_sub': 'To the IZeny social network, community & tech support',
       'bullet_1': 'Connect with ZenyDesk technicians, partners and clients',
       'bullet_2': 'Share business updates, photos and repair worklogs',
       'bullet_3': 'Get fast support and build professional networking',
@@ -76,7 +76,7 @@ class I18n {
     },
     'es': {
       'greeting': '¡Hola! Buenos días, bienvenido(a)',
-      'welcome_sub': 'A la red social, comunidad y soporte técnico 𝗜𝓩𝓮𝓷𝔂',
+      'welcome_sub': 'A la red social, comunidad y soporte técnico IZeny',
       'bullet_1': 'Conéctate con técnicos, socios y clientes de ZenyDesk',
       'bullet_2': 'Comparte novedades, fotos y reportes de tu empresa',
       'bullet_3': 'Recibe soporte rápido y genera networking profesional',
@@ -112,3 +112,4 @@ class I18n {
     return langMap[key] ?? _strings['pt']![key] ?? key;
   }
 }
+

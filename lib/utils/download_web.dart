@@ -4,3 +4,4 @@ import 'dart:html' as html;
 void triggerApkDownload(String url) {
   html.window.open(url, '_blank');
 }
+

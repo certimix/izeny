@@ -4,9 +4,8 @@ import 'package:ionicons/ionicons.dart';
 AppBar header(context) {
   return AppBar(
     title: Text(
-      '𝗜𝓩𝓮𝓷𝔂',
+      'IZeny',
       style: TextStyle(
-        fontFamily: 'NotoSansMath',
         fontWeight: FontWeight.w900,
         fontSize: 22.0,
       ),

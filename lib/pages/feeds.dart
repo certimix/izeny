@@ -57,7 +57,6 @@ class _FeedsState extends State<Feeds> with AutomaticKeepAliveClientMixin{
             Text(
               Constants.appName,
               style: const TextStyle(
-                fontFamily: 'NotoSansMath',
                 fontWeight: FontWeight.w900,
                 fontSize: 22.0,
               ),

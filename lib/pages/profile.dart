@@ -61,9 +61,8 @@ class _ProfileState extends State<Profile> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          '𝗜𝓩𝓮𝓷𝔂',
+          'IZeny',
           style: TextStyle(
-            fontFamily: 'NotoSansMath',
             fontWeight: FontWeight.w900,
             fontSize: 22.0,
           ),

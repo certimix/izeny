@@ -154,8 +154,8 @@ class _LoginState extends State<Login> {
         const SizedBox(height: 20.0),
         Center(
           child: Image.asset(
-            'assets/images/login.png',
-            height: compact ? 160.0 : 250.0,
+            'assets/images/logo_dark.png',
+            height: compact ? 80.0 : 120.0,
             fit: BoxFit.contain,
           ),
         ),
@@ -228,19 +228,8 @@ class _LoginState extends State<Login> {
           // Official White Logo
           Image.asset(
             'assets/images/logo_white.png',
-            height: 52.0,
+            height: 56.0,
             fit: BoxFit.contain,
-          ),
-          const SizedBox(height: 8.0),
-          const Text(
-            '𝗜𝓩𝓮𝓷𝔂',
-            style: TextStyle(
-              fontFamily: 'NotoSansMath',
-              fontSize: 24.0,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 0.5,
-            ),
           ),
           const SizedBox(height: 24.0),
 

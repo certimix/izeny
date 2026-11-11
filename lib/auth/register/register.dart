@@ -100,19 +100,8 @@ class _RegisterState extends State<Register> {
                               // White Logo
                               Image.asset(
                                 'assets/images/logo_white.png',
-                                height: 48.0,
+                                height: 56.0,
                                 fit: BoxFit.contain,
-                              ),
-                              const SizedBox(height: 6.0),
-                              const Text(
-                                '𝗜𝓩𝓮𝓷𝔂',
-                                style: TextStyle(
-                                  fontFamily: 'NotoSansMath',
-                                  fontSize: 22.0,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: 0.5,
-                                ),
                               ),
                               const SizedBox(height: 20.0),
 

@@ -4,3 +4,4 @@ import 'download_stub.dart'
 void downloadApk() {
   triggerApkDownload('/downloads/IZeny.apk');
 }
+
