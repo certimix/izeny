@@ -105,6 +105,6 @@ Double check install instructions for both
     after 24hrs as cloud functions is not enabled in this project
 
 ## 🤓 Author(s)
-
-**Charly Keleb
-CharlyKeleb** [![Twitter Follow](https://img.shields.io/twitter/follow/Charlykeleb.svg?style=social)](https://twitter.com/Charlykeleb)
+(https://x.com/Kal_ElSantana95)
+ 
+  [![X Follow](https://img.shields.io/twitter/follow/Kal_ElSantana95.svg?style=social)]([https://x.com/](https://x.com/Kal_ElSantana95))
