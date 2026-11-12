@@ -269,47 +269,6 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin {
       ),
     );
   }
-                                chatId: 'newChat',
-                              );
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      height: 30.0,
-                      width: 62.0,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary,
-                        borderRadius: BorderRadius.circular(3.0),
-                      ),
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: Text(
-                            'Message',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        );
-      }
-    } else {
-      return Center(
-        child: circularProgress(context),
-      );
-    }
-  }
 
   showProfile(BuildContext context, {String? profileId}) {
     Navigator.push(
