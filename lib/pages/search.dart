@@ -213,7 +213,7 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin {
           DocumentSnapshot doc = filteredUsers[index];
           UserModel user =
               UserModel.fromJson(doc.data() as Map<String, dynamic>);
-          final uName = user.name ?? user.username ?? 'Técnico';
+          final uName = user.username ?? 'Técnico';
           final uHandle = user.username ?? 'user';
           final uBio = user.bio ?? user.country ?? 'Ecossistema ZenyDesk';
           final uPhoto = user.photoUrl ?? '';
