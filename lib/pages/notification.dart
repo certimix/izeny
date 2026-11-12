@@ -11,8 +11,8 @@ class Activities extends StatefulWidget {
 }
 
 class _ActivitiesState extends State<Activities> {
-  currentUserId() {
-    return firebaseAuth.currentUser!.uid;
+  String currentUserId() {
+    return firebaseAuth.currentUser?.uid ?? '';
   }
 
   @override
@@ -20,8 +20,15 @@ class _ActivitiesState extends State<Activities> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text('Notificações'),
-        centerTitle: true,
+        title: const Text(
+          'Notificações',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 20.0,
+            letterSpacing: -0.3,
+          ),
+        ),
+        centerTitle: false,
         actions: [
           Padding(
             padding: const EdgeInsets.all(20.0),
@@ -39,25 +46,30 @@ class _ActivitiesState extends State<Activities> {
           ),
         ],
       ),
-      body: ListView(
-        children: [
-          getActivities(),
-        ],
-      ),
+      body: currentUserId().isEmpty
+          ? const Center(child: Text("Faça login para ver suas notificações."))
+          : ListView(
+              children: [
+                getActivities(),
+              ],
+            ),
     );
   }
 
   getActivities() {
+    final uid = currentUserId();
+    if (uid.isEmpty) return const SizedBox.shrink();
+
     return ActivityStreamWrapper(
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       stream: notificationRef
-          .doc(currentUserId())
+          .doc(uid)
           .collection('notifications')
           .orderBy('timestamp', descending: true)
           .limit(20)
           .snapshots(),
-      physics: NeverScrollableScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (_, DocumentSnapshot snapshot) {
         ActivityModel activities =
             ActivityModel.fromJson(snapshot.data() as Map<String, dynamic>);
@@ -69,17 +81,17 @@ class _ActivitiesState extends State<Activities> {
   }
 
   deleteAllItems() async {
-//delete all notifications associated with the authenticated user
+    final uid = currentUserId();
+    if (uid.isEmpty) return;
     QuerySnapshot notificationsSnap = await notificationRef
-        .doc(firebaseAuth.currentUser!.uid)
+        .doc(uid)
         .collection('notifications')
         .get();
-    notificationsSnap.docs.forEach(
-      (doc) {
-        if (doc.exists) {
-          doc.reference.delete();
-        }
-      },
-    );
+    for (var doc in notificationsSnap.docs) {
+      if (doc.exists) {
+        doc.reference.delete();
+      }
+    }
+    setState(() {});
   }
 }

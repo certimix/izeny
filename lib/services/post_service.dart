@@ -20,9 +20,49 @@ class PostService extends Service {
     });
   }
 
+  // Universal post creator supporting web, mobile, text-only, and media
+  Future<bool> createPostRaw({
+    required String description,
+    String? location,
+    String? mediaUrl,
+  }) async {
+    try {
+      final uid = firebaseAuth.currentUser?.uid ?? '';
+      if (uid.isEmpty) return false;
+
+      DocumentSnapshot doc = await usersRef.doc(uid).get();
+      String username = 'Usuário';
+      if (doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        username = data['name'] ?? data['username'] ?? 'Usuário';
+      }
+
+      var ref = postRef.doc();
+      await ref.set({
+        "id": ref.id,
+        "postId": ref.id,
+        "username": username,
+        "ownerId": uid,
+        "owner": uid,
+        "mediaUrl": mediaUrl ?? "",
+        "description": description.trim(),
+        "location": (location != null && location.trim().isNotEmpty) ? location.trim() : "IZeny",
+        "timestamp": Timestamp.now(),
+        "likes": [],
+      });
+      return true;
+    } catch (e) {
+      print('createPostRaw error: $e');
+      return false;
+    }
+  }
+
 //uploads post to the post collection
-  uploadPost(File image, String location, String description) async {
-    String link = await uploadImage(posts, image);
+  uploadPost(File? image, String? location, String? description) async {
+    String link = "";
+    if (image != null) {
+      link = await uploadImage(posts, image);
+    }
     DocumentSnapshot doc =
         await usersRef.doc(firebaseAuth.currentUser!.uid).get();
     user = UserModel.fromJson(
@@ -32,12 +72,14 @@ class PostService extends Service {
     ref.set({
       "id": ref.id,
       "postId": ref.id,
-      "username": user!.username,
+      "username": user?.username ?? "Usuário",
       "ownerId": firebaseAuth.currentUser!.uid,
+      "owner": firebaseAuth.currentUser!.uid,
       "mediaUrl": link,
       "description": description ?? "",
       "location": location ?? "IZeny",
       "timestamp": Timestamp.now(),
+      "likes": [],
     }).catchError((e) {
       print(e);
     });

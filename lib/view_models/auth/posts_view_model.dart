@@ -157,15 +157,18 @@ class PostsViewModel extends ChangeNotifier {
     try {
       loading = true;
       notifyListeners();
-      await postService.uploadPost(mediaUrl!, location!, description!);
+      await postService.createPostRaw(
+        description: description ?? '',
+        location: location ?? 'IZeny',
+        mediaUrl: imgLink ?? '',
+      );
       loading = false;
       resetPost();
       notifyListeners();
     } catch (e) {
-      print(e);
+      print('uploadPosts error: $e');
       loading = false;
       resetPost();
-      showInSnackBar('Uploaded successfully!', context);
       notifyListeners();
     }
   }

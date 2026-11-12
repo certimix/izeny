@@ -13,60 +13,50 @@ class StoryWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 100.0,
-      child: Padding(
-        padding: const EdgeInsets.only(left: 5.0),
-        child: StreamBuilder<QuerySnapshot>(
-          stream: userChatsStream('${(firebaseAuth.currentUser?.uid ?? '')}'),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              List chatList = snapshot.data!.docs;
-              if (chatList.isNotEmpty) {
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 5.0),
-                  itemCount: chatList.length,
-                  scrollDirection: Axis.horizontal,
-                  physics: AlwaysScrollableScrollPhysics(),
-                  itemBuilder: (BuildContext context, int index) {
-                    DocumentSnapshot statusListSnapshot = chatList[index];
-                    return StreamBuilder<QuerySnapshot>(
-                      stream: messageListStream(statusListSnapshot.id),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          List statuses = snapshot.data!.docs;
-                          StatusModel status = StatusModel.fromJson(
-                            statuses.first.data(),
-                          );
-                          List users = statusListSnapshot.get('whoCanSee');
-                          // remove the current user's id from the Users
-                          // list so we can get the rest of the user's id
-                          users.remove('${(firebaseAuth.currentUser?.uid ?? '')}');
-                          return _buildStatusAvatar(
-                              statusListSnapshot.get('userId'),
-                              statusListSnapshot.id,
-                              status.statusId!,
-                              index);
-                        } else {
-                          return const SizedBox();
-                        }
-                      },
+    final uid = firebaseAuth.currentUser?.uid ?? '';
+    if (uid.isEmpty) return const SizedBox.shrink();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: userChatsStream(uid),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        List chatList = snapshot.data!.docs;
+        if (chatList.isEmpty) return const SizedBox.shrink();
+
+        return Container(
+          height: 90.0,
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: chatList.length,
+            itemBuilder: (BuildContext context, int index) {
+              DocumentSnapshot statusListSnapshot = chatList[index];
+              return StreamBuilder<QuerySnapshot>(
+                stream: messageListStream(statusListSnapshot.id),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    List statuses = snapshot.data!.docs;
+                    if (statuses.isEmpty) return const SizedBox.shrink();
+                    StatusModel status = StatusModel.fromJson(
+                      statuses.first.data(),
                     );
-                  },
-                );
-              } else {
-                return Center(
-                  child: Text(
-                    'No Status',
-                  ),
-                );
-              }
-            } else {
-              return circularProgress(context);
-            }
-          },
-        ),
-      ),
+                    List users = List.from(statusListSnapshot.get('whoCanSee') ?? []);
+                    users.remove(uid);
+                    return _buildStatusAvatar(
+                        statusListSnapshot.get('userId') ?? '',
+                        statusListSnapshot.id,
+                        status.statusId ?? '',
+                        index);
+                  } else {
+                    return const SizedBox.shrink();
+                  }
+                },
+              );
+            },
+          ),
+        );
+      },
     );
   }
 

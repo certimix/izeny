@@ -68,7 +68,7 @@ class _ProfileState extends State<Profile> {
           ),
         ),
         actions: [
-          widget.profileId == firebaseAuth.currentUser!.uid
+          widget.profileId == (firebaseAuth.currentUser?.uid ?? '')
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.only(right: 25.0),
@@ -107,10 +107,16 @@ class _ProfileState extends State<Profile> {
               background: StreamBuilder(
                 stream: usersRef.doc(widget.profileId).snapshots(),
                 builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-                  if (snapshot.hasData) {
+                  if (snapshot.hasData && snapshot.data?.data() != null) {
                     UserModel user = UserModel.fromJson(
                       snapshot.data!.data() as Map<String, dynamic>,
                     );
+                    final photoUrl = user.photoUrl ?? '';
+                    final username = user.username ?? 'Usuário';
+                    final country = user.country ?? 'Brasil';
+                    final email = user.email ?? '';
+                    final bio = user.bio ?? '';
+
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -119,7 +125,7 @@ class _ProfileState extends State<Profile> {
                           children: [
                             Padding(
                               padding: const EdgeInsets.only(left: 20.0),
-                              child: user.photoUrl!.isEmpty
+                              child: photoUrl.isEmpty
                                   ? CircleAvatar(
                                       radius: 40.0,
                                       backgroundColor: Theme.of(context)
@@ -127,7 +133,7 @@ class _ProfileState extends State<Profile> {
                                           .secondary,
                                       child: Center(
                                         child: Text(
-                                          '${user.username![0].toUpperCase()}',
+                                          username.isNotEmpty ? username[0].toUpperCase() : 'U',
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 15.0,
@@ -140,7 +146,7 @@ class _ProfileState extends State<Profile> {
                                       radius: 40.0,
                                       backgroundImage:
                                           CachedNetworkImageProvider(
-                                        '${user.photoUrl}',
+                                        photoUrl,
                                       ),
                                     ),
                             ),
@@ -162,7 +168,7 @@ class _ProfileState extends State<Profile> {
                                         Container(
                                           width: 130.0,
                                           child: Text(
-                                            user.username!,
+                                            username,
                                             style: TextStyle(
                                               fontSize: 15.0,
                                               fontWeight: FontWeight.w900,
@@ -173,7 +179,7 @@ class _ProfileState extends State<Profile> {
                                         Container(
                                           width: 130.0,
                                           child: Text(
-                                            user.country!,
+                                            country,
                                             style: TextStyle(
                                               fontSize: 12.0,
                                               fontWeight: FontWeight.w600,
@@ -189,7 +195,7 @@ class _ProfileState extends State<Profile> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              user.email!,
+                                              email,
                                               style: TextStyle(
                                                 fontSize: 10.0,
                                               ),
@@ -234,12 +240,12 @@ class _ProfileState extends State<Profile> {
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 10.0, left: 20.0),
-                          child: user.bio!.isEmpty
+                          child: bio.isEmpty
                               ? Container()
                               : Container(
                                   width: 200,
                                   child: Text(
-                                    user.bio!,
+                                    bio,
                                     style: TextStyle(
                                       fontSize: 10.0,
                                       fontWeight: FontWeight.w600,
@@ -414,7 +420,7 @@ class _ProfileState extends State<Profile> {
 
   buildProfileButton(user) {
     //if isMe then display "edit profile"
-    bool isMe = widget.profileId == firebaseAuth.currentUser!.uid;
+    bool isMe = widget.profileId == (firebaseAuth.currentUser?.uid ?? '');
     if (isMe) {
       return buildButton(
           text: "Edit Profile",
@@ -445,7 +451,7 @@ class _ProfileState extends State<Profile> {
   buildButton({String? text, Function()? function}) {
     return Center(
       child: GestureDetector(
-        onTap: function!,
+        onTap: function ?? () {},
         child: Container(
           height: 40.0,
           width: 200.0,

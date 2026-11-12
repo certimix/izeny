@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
 import 'package:social_media_app/chats/conversation.dart';
@@ -12,6 +13,7 @@ import 'package:social_media_app/pages/profile.dart';
 import 'package:social_media_app/pages/search.dart';
 import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:social_media_app/posts/create_post.dart';
+import 'package:social_media_app/services/post_service.dart';
 import 'package:social_media_app/utils/download_helper.dart';
 import 'package:social_media_app/utils/firebase.dart';
 import 'package:social_media_app/utils/i18n.dart';
@@ -24,15 +26,16 @@ class TabScreen extends StatefulWidget {
 
 class _TabScreenState extends State<TabScreen> {
   int _page = 0;
+  String? _activeSearchQuery;
 
   Widget _getPage(int index, String currentUid) {
     switch (index) {
       case 0:
-        return Feeds();
+        return Feeds(onOpenChats: () => setState(() => _page = 1));
       case 1:
-        return Chats();
+        return const Chats();
       case 2:
-        return Search();
+        return Search(initialQuery: _activeSearchQuery);
       case 3:
         return Activities();
       case 4:
@@ -42,9 +45,14 @@ class _TabScreenState extends State<TabScreen> {
   }
 
   void _openCreatePost() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (_) => CreatePost(),
+    showDialog(
+      context: context,
+      builder: (ctx) => _CreatePostDialog(
+        onPostCreated: () {
+          setState(() {
+            _page = 0;
+          });
+        },
       ),
     );
   }
@@ -390,7 +398,12 @@ class _TabScreenState extends State<TabScreen> {
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     onSubmitted: (val) {
-                      setState(() => _page = 2);
+                      if (val.trim().isNotEmpty) {
+                        setState(() {
+                          _activeSearchQuery = val.trim();
+                          _page = 2;
+                        });
+                      }
                     },
                   ),
                 ),
@@ -399,7 +412,59 @@ class _TabScreenState extends State<TabScreen> {
           ),
           const SizedBox(height: 20),
 
-          // 2. Active Technicians & Partners Card
+          // 2. Tópicos & Tendências Card (Trending Topics)
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(color: borderColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(CupertinoIcons.number, size: 18, color: Color(0xFF2563EB)),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Tópicos & Tendências',
+                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildTopicItem(
+                  topic: '#zenydesk',
+                  category: 'Ecossistema & Comunidade',
+                  count: '128 posts',
+                ),
+                _buildTopicItem(
+                  topic: '#dicas_tecnicas',
+                  category: 'Bancada, Placas & Hardware',
+                  count: '94 posts',
+                ),
+                _buildTopicItem(
+                  topic: '#ti_ajuda',
+                  category: 'Dúvidas Técnicas & Redes',
+                  count: '76 posts',
+                ),
+                _buildTopicItem(
+                  topic: '#suporte_direto',
+                  category: 'Atendimento Especializado',
+                  count: '52 posts',
+                ),
+                _buildTopicItem(
+                  topic: '#ordem_servico',
+                  category: 'Gestão e Laudos Map-OS',
+                  count: '41 posts',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // 3. Active Technicians & Partners Card
           Container(
             padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
@@ -564,6 +629,58 @@ class _TabScreenState extends State<TabScreen> {
     );
   }
 
+  Widget _buildTopicItem({
+    required String topic,
+    required String category,
+    required String count,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () {
+          setState(() {
+            _activeSearchQuery = topic;
+            _page = 2;
+          });
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 4.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      topic,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                    Text(
+                      category,
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                count,
+                style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildEcosystemItem({
     required IconData icon,
     required String title,
@@ -671,6 +788,247 @@ class _TabScreenState extends State<TabScreen> {
           Icons.add,
           color: Colors.white,
           size: 26,
+        ),
+      ),
+    );
+  }
+}
+
+class _CreatePostDialog extends StatefulWidget {
+  final VoidCallback onPostCreated;
+  const _CreatePostDialog({Key? key, required this.onPostCreated}) : super(key: key);
+
+  @override
+  State<_CreatePostDialog> createState() => _CreatePostDialogState();
+}
+
+class _CreatePostDialogState extends State<_CreatePostDialog> {
+  final TextEditingController _controller = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
+  String? _mediaUrl;
+  String? _mediaName;
+  bool _uploading = false;
+  bool _publishing = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1280,
+        maxHeight: 1280,
+        imageQuality: 85,
+      );
+      if (file == null) return;
+
+      setState(() => _uploading = true);
+      final bytes = await file.readAsBytes();
+      final url = await PBClient.uploadBytes(
+        bytes,
+        file.name,
+        collection: 'posts',
+        field: 'media',
+      );
+
+      setState(() {
+        _uploading = false;
+        if (url.isNotEmpty) {
+          _mediaUrl = url;
+          _mediaName = file.name;
+        }
+      });
+    } catch (e) {
+      setState(() => _uploading = false);
+      debugPrint('Dialog pick image error: $e');
+    }
+  }
+
+  Future<void> _submit() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty && _mediaUrl == null) return;
+
+    setState(() => _publishing = true);
+    final ok = await PostService().createPostRaw(
+      description: text,
+      mediaUrl: _mediaUrl,
+    );
+    setState(() => _publishing = false);
+
+    if (ok) {
+      Navigator.of(context).pop();
+      widget.onPostCreated();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Publicação criada com sucesso!'),
+          backgroundColor: Color(0xFF10B981),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentUid = firebaseAuth.currentUser?.uid ?? '';
+    final primaryBlue = const Color(0xFF2563EB);
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 540),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Nova Publicação',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const Divider(height: 16),
+              StreamBuilder<DocumentSnapshot>(
+                stream: currentUid.isNotEmpty ? usersRef.doc(currentUid).snapshots() : null,
+                builder: (context, snapshot) {
+                  String name = 'Minha Conta';
+                  String username = '@usuario';
+                  String photoUrl = '';
+                  if (snapshot.hasData && snapshot.data?.data() != null) {
+                    final data = snapshot.data!.data() as Map<String, dynamic>;
+                    name = data['name'] ?? data['username'] ?? 'Usuário';
+                    username = '@${data['username'] ?? 'user'}';
+                    photoUrl = data['photoUrl'] ?? '';
+                  }
+                  return Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: primaryBlue.withOpacity(0.12),
+                        backgroundImage: photoUrl.isNotEmpty ? CachedNetworkImageProvider(photoUrl) : null,
+                        child: photoUrl.isEmpty
+                            ? Text(name.isNotEmpty ? name[0].toUpperCase() : 'U', style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold))
+                            : null,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                      const SizedBox(width: 6),
+                      Text(username, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                ),
+                child: TextField(
+                  controller: _controller,
+                  maxLines: 5,
+                  minLines: 2,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'O que está acontecendo na sua oficina ou empresa?',
+                    hintStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[500], fontSize: 14),
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
+                ),
+              ),
+              if (_uploading) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: const [
+                    SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+                    SizedBox(width: 8),
+                    Text('Enviando imagem anexa...', style: TextStyle(fontSize: 12, color: Color(0xFF2563EB))),
+                  ],
+                ),
+              ],
+              if (_mediaUrl != null && _mediaUrl!.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: primaryBlue.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: primaryBlue.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.image, size: 16, color: Color(0xFF2563EB)),
+                      const SizedBox(width: 6),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 220),
+                        child: Text(
+                          _mediaName ?? 'Imagem anexada',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () => setState(() {
+                          _mediaUrl = null;
+                          _mediaName = null;
+                        }),
+                        child: const Icon(Icons.close, size: 16, color: Colors.redAccent),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  TextButton.icon(
+                    onPressed: _uploading ? null : _pickImage,
+                    icon: const Icon(CupertinoIcons.photo, size: 18, color: Color(0xFF10B981)),
+                    label: const Text('Foto', style: TextStyle(color: Color(0xFF10B981), fontSize: 13, fontWeight: FontWeight.bold)),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      primary: primaryBlue,
+                      onPrimary: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                      elevation: 0,
+                    ),
+                    onPressed: _publishing ? null : _submit,
+                    child: _publishing
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Publicar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

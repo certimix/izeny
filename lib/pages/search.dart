@@ -15,6 +15,9 @@ import 'package:social_media_app/utils/firebase.dart';
 import 'package:social_media_app/widgets/indicators.dart';
 
 class Search extends StatefulWidget {
+  final String? initialQuery;
+  const Search({Key? key, this.initialQuery}) : super(key: key);
+
   @override
   _SearchState createState() => _SearchState();
 }
@@ -28,59 +31,85 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin {
   List<DocumentSnapshot> filteredUsers = [];
   bool loading = true;
 
-  currentUserId() {
-    return firebaseAuth.currentUser!.uid;
+  String currentUserId() {
+    return firebaseAuth.currentUser?.uid ?? '';
   }
 
   getUsers() async {
-    QuerySnapshot snap = await usersRef.get();
-    List<DocumentSnapshot> doc = snap.docs;
-    users = doc;
-    filteredUsers = doc;
-    setState(() {
-      loading = false;
-    });
+    try {
+      QuerySnapshot snap = await usersRef.get();
+      final myUid = currentUserId();
+      List<DocumentSnapshot> doc = snap.docs.where((d) => d.id != myUid).toList();
+      users = doc;
+      if (searchController.text.trim().isNotEmpty) {
+        search(searchController.text);
+      } else {
+        filteredUsers = doc;
+      }
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('getUsers error: $e');
+      if (mounted) setState(() => loading = false);
+    }
   }
 
   search(String query) {
-    if (query == "") {
-      filteredUsers = users;
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) {
+      setState(() {
+        filteredUsers = users;
+      });
     } else {
-      List userSearch = users.where((userSnap) {
-        Map user = userSnap.data() as Map<String, dynamic>;
-        String userName = user['username'];
-        return userName.toLowerCase().contains(query.toLowerCase());
+      List<DocumentSnapshot> userSearch = users.where((userSnap) {
+        Map user = (userSnap.data() as Map<String, dynamic>?) ?? {};
+        String userName = (user['username'] ?? '').toString().toLowerCase();
+        String name = (user['name'] ?? '').toString().toLowerCase();
+        String bio = (user['bio'] ?? '').toString().toLowerCase();
+        return userName.contains(q) || name.contains(q) || bio.contains(q);
       }).toList();
       setState(() {
-        filteredUsers = userSearch as List<DocumentSnapshot<Object?>>;
+        filteredUsers = userSearch;
       });
     }
   }
 
   removeFromList(index) {
-    filteredUsers.removeAt(index);
+    if (index >= 0 && index < filteredUsers.length) {
+      filteredUsers.removeAt(index);
+    }
   }
 
   @override
   void initState() {
+    if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
+      searchController.text = widget.initialQuery!;
+    }
     getUsers();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text(
-          Constants.appName,
+        title: const Text(
+          'Buscar',
           style: TextStyle(
-            fontFamily: 'NotoSansMath',
-            fontWeight: FontWeight.w900,
-            fontSize: 24.0,
+            fontWeight: FontWeight.w800,
+            fontSize: 20.0,
+            letterSpacing: -0.3,
           ),
         ),
-        centerTitle: true,
+        centerTitle: false,
       ),
       body: RefreshIndicator(
         color: Theme.of(context).colorScheme.secondary,
@@ -90,8 +119,8 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.0),
-              child: buildSearch(),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              child: buildSearch(isDark),
             ),
             buildUsers(),
           ],
@@ -100,144 +129,146 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin {
     );
   }
 
-  buildSearch() {
-    return Row(
-      children: [
-        Container(
-          height: 30.0,
-          width: MediaQuery.of(context).size.width - 50,
-          decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5.0),
-            child: TextFormField(
+  Widget buildSearch(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(24.0),
+        border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Icon(CupertinoIcons.search, size: 18, color: Colors.grey[400]),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
               controller: searchController,
               textAlignVertical: TextAlignVertical.center,
-              maxLength: 10,
-              maxLengthEnforcement: MaxLengthEnforcement.enforced,
-              inputFormatters: [
-                LengthLimitingTextInputFormatter(20),
-              ],
-              textCapitalization: TextCapitalization.sentences,
               onChanged: (query) {
                 search(query);
               },
               decoration: InputDecoration(
-                suffixIcon: GestureDetector(
-                  onTap: () {
-                    searchController.clear();
-                  },
-                  child: Icon(
-                    Ionicons.close_outline,
-                    size: 12.0,
-                    color: Theme.of(context).colorScheme.secondary,
-                  ),
-                ),
-                // contentPadding: EdgeInsets.only(bottom: 10.0, left: 10.0),
+                suffixIcon: searchController.text.isNotEmpty
+                    ? GestureDetector(
+                        onTap: () {
+                          searchController.clear();
+                          search('');
+                        },
+                        child: const Icon(
+                          Ionicons.close_outline,
+                          size: 16.0,
+                          color: Colors.grey,
+                        ),
+                      )
+                    : null,
                 border: InputBorder.none,
-                counterText: '',
-                hintText: 'Search...',
+                isDense: true,
+                hintText: 'Buscar técnicos, empresas ou tópicos...',
                 hintStyle: TextStyle(
-                  fontSize: 13.0,
+                  fontSize: 13.5,
+                  color: isDark ? Colors.grey[400] : Colors.grey[500],
                 ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   buildUsers() {
-    if (!loading) {
-      if (filteredUsers.isEmpty) {
-        return Center(
-          child: Text("No User Found",
-              style: TextStyle(fontWeight: FontWeight.bold),),
-        );
-      } else {
-        return Expanded(
-          child: Container(
-            child: ListView.builder(
-              itemCount: filteredUsers.length,
-              itemBuilder: (BuildContext context, int index) {
-                DocumentSnapshot doc = filteredUsers[index];
-                UserModel user =
-                    UserModel.fromJson(doc.data() as Map<String, dynamic>);
-                if (doc.id == currentUserId()) {
-                  Timer(Duration(milliseconds: 500), () {
-                    setState(() {
-                      removeFromList(index);
-                    });
-                  });
-                }
-                return ListTile(
-                  onTap: () => showProfile(context, profileId: user.id!),
-                  leading: user.photoUrl!.isEmpty
-                      ? CircleAvatar(
-                          radius: 20.0,
-                          backgroundColor:
-                              Theme.of(context).colorScheme.secondary,
-                          child: Center(
-                            child: Text(
-                              '${user.username![0].toUpperCase()}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15.0,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        )
-                      : CircleAvatar(
-                          radius: 20.0,
-                          backgroundImage: CachedNetworkImageProvider(
-                            '${user.photoUrl}',
-                          ),
-                        ),
-                  title: Text(
-                    user.username!,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+    if (loading) {
+      return Center(child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: circularProgress(context),
+      ));
+    }
+
+    if (filteredUsers.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(CupertinoIcons.search, size: 40, color: Colors.grey[400]),
+              const SizedBox(height: 10),
+              Text(
+                "Nenhum técnico ou parceiro encontrado",
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Expanded(
+      child: ListView.separated(
+        itemCount: filteredUsers.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (BuildContext context, int index) {
+          DocumentSnapshot doc = filteredUsers[index];
+          UserModel user =
+              UserModel.fromJson(doc.data() as Map<String, dynamic>);
+          final uName = user.name ?? user.username ?? 'Técnico';
+          final uHandle = user.username ?? 'user';
+          final uBio = user.bio ?? user.country ?? 'Ecossistema ZenyDesk';
+          final uPhoto = user.photoUrl ?? '';
+          final uId = user.id ?? doc.id;
+
+          return ListTile(
+            onTap: () => showProfile(context, profileId: uId),
+            leading: CircleAvatar(
+              radius: 20.0,
+              backgroundColor: const Color(0xFF2563EB).withOpacity(0.12),
+              backgroundImage: uPhoto.isNotEmpty ? CachedNetworkImageProvider(uPhoto) : null,
+              child: uPhoto.isEmpty
+                  ? Text(
+                      uName.isNotEmpty ? uName[0].toUpperCase() : 'U',
+                      style: const TextStyle(
+                        color: Color(0xFF2563EB),
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
+            ),
+            title: Text(
+              uName,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            subtitle: Text(
+              '@$uHandle • $uBio',
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: IconButton(
+              icon: const Icon(CupertinoIcons.chat_bubble_fill, size: 18, color: Color(0xFF2563EB)),
+              tooltip: 'Iniciar Conversa',
+              onPressed: () {
+                final myUid = currentUserId();
+                final list = [myUid, uId]..sort();
+                final derivedChatId = '${list[0]}-${list[1]}';
+                Navigator.push(
+                  context,
+                  CupertinoPageRoute(
+                    builder: (_) => Conversation(
+                      userId: uId,
+                      chatId: derivedChatId,
+                    ),
                   ),
-                  subtitle: Text(
-                    user.email!,
-                  ),
-                  trailing: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        CupertinoPageRoute(
-                          builder: (_) => StreamBuilder(
-                            stream: chatIdRef
-                                .where(
-                                  "users",
-                                  isEqualTo: getUser(
-                                    firebaseAuth.currentUser!.uid,
-                                    doc.id,
-                                  ),
-                                )
-                                .snapshots(),
-                            builder: (context,
-                                AsyncSnapshot<QuerySnapshot> snapshot) {
-                              if (snapshot.hasData) {
-                                var snap = snapshot.data;
-                                List docs = snap!.docs;
-                                print(snapshot.data!.docs.toString());
-                                return docs.isEmpty
-                                    ? Conversation(
-                                        userId: doc.id,
-                                        chatId: 'newChat',
-                                      )
-                                    : Conversation(
-                                        userId: doc.id,
-                                        chatId:
-                                            docs[0].get('chatId').toString(),
-                                      );
-                              }
-                              return Conversation(
-                                userId: doc.id,
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
                                 chatId: 'newChat',
                               );
                             },

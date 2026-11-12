@@ -70,74 +70,94 @@ class _CreatePostState extends State<CreatePost> {
               )
             ],
           ),
-          body: ListView(
-            padding: EdgeInsets.symmetric(horizontal: 15.0),
-            children: [
-              SizedBox(height: 15.0),
-              StreamBuilder(
-                stream: usersRef.doc(currentUserId()).snapshots(),
-                builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-                  if (snapshot.hasData) {
-                    UserModel user = UserModel.fromJson(
-                      snapshot.data!.data() as Map<String, dynamic>,
-                    );
-                    return ListTile(
-                      leading: CircleAvatar(
-                        radius: 25.0,
-                        backgroundImage: NetworkImage(user.photoUrl!),
-                      ),
-                      title: Text(
-                        user.username!,
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        user.email!,
-                      ),
-                    );
-                  }
-                  return Container();
-                },
-              ),
-              InkWell(
-                onTap: () => showImageChoices(context, viewModel),
-                child: Container(
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.width - 30,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(5.0),
-                    ),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                children: [
+                  StreamBuilder(
+                    stream: usersRef.doc(currentUserId()).snapshots(),
+                    builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                      if (snapshot.hasData && snapshot.data?.data() != null) {
+                        UserModel user = UserModel.fromJson(
+                          snapshot.data!.data() as Map<String, dynamic>,
+                        );
+                        final pUrl = user.photoUrl ?? '';
+                        final uName = user.username ?? 'Usuário';
+                        final uEmail = user.email ?? '';
+
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: CircleAvatar(
+                            radius: 22.0,
+                            backgroundColor: const Color(0xFF2563EB).withOpacity(0.12),
+                            backgroundImage: pUrl.isNotEmpty ? CachedNetworkImageProvider(pUrl) : null,
+                            child: pUrl.isEmpty
+                                ? Text(
+                                    uName.isNotEmpty ? uName[0].toUpperCase() : 'U',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                  )
+                                : null,
+                          ),
+                          title: Text(
+                            uName,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(uEmail),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
                   ),
-                  child: viewModel.imgLink != null
-                      ? CustomImage(
-                          imageUrl: viewModel.imgLink,
-                          width: MediaQuery.of(context).size.width,
-                          height: MediaQuery.of(context).size.width - 30,
-                          fit: BoxFit.cover,
-                        )
-                      : viewModel.mediaUrl == null
-                          ? Center(
-                              child: Text(
-                                'Upload a Photo',
-                                style: TextStyle(
-                                  color:
-                                      Theme.of(context).colorScheme.secondary,
-                                ),
+                  const SizedBox(height: 10.0),
+                  InkWell(
+                    onTap: () => showImageChoices(context, viewModel),
+                    child: Container(
+                      width: double.infinity,
+                      height: 200.0,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(12.0),
+                        ),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+                        ),
+                      ),
+                      child: viewModel.imgLink != null && viewModel.imgLink!.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12.0),
+                              child: CustomImage(
+                                imageUrl: viewModel.imgLink,
+                                width: double.infinity,
+                                height: 200.0,
+                                fit: BoxFit.cover,
                               ),
                             )
-                          : Image.file(
-                              viewModel.mediaUrl!,
-                              width: MediaQuery.of(context).size.width,
-                              height: MediaQuery.of(context).size.width - 30,
-                              fit: BoxFit.cover,
+                          : Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    CupertinoIcons.photo,
+                                    size: 36,
+                                    color: Theme.of(context).colorScheme.secondary,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Anexar Foto',
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.secondary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                ),
-              ),
-              SizedBox(height: 20.0),
+                    ),
+                  ),
+                  const SizedBox(height: 20.0),
               Text(
                 'Post Caption'.toUpperCase(),
                 style: TextStyle(

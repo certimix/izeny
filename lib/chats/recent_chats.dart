@@ -9,11 +9,12 @@ import 'package:social_media_app/view_models/user/user_view_model.dart';
 import 'package:social_media_app/widgets/indicators.dart';
 
 class Chats extends StatelessWidget {
+  const Chats({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    UserViewModel viewModel =
-        Provider.of<UserViewModel>(context, listen: false);
-    viewModel.setUser();
+    final currentUid = firebaseAuth.currentUser?.uid ?? '';
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -27,66 +28,85 @@ class Chats extends StatelessWidget {
             : null,
         title: const Text(
           "Mensagens",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 20.0,
+            letterSpacing: -0.3,
+          ),
         ),
+        centerTitle: false,
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: userChatsStream('${viewModel.user!.uid ?? ""}'),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            List chatList = snapshot.data!.docs;
-            if (chatList.isNotEmpty) {
-              return ListView.separated(
-                itemCount: chatList.length,
-                itemBuilder: (BuildContext context, int index) {
-                  DocumentSnapshot chatListSnapshot = chatList[index];
-                  return StreamBuilder<QuerySnapshot>(
-                    stream: messageListStream(chatListSnapshot.id),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        List messages = snapshot.data!.docs;
-                        if (messages.isEmpty) return const SizedBox();
-                        Message message = Message.fromJson(
-                          messages.first.data() as Map<String, dynamic>,
+      body: currentUid.isEmpty
+          ? const Center(child: Text("Faça login para ver suas conversas."))
+          : StreamBuilder<QuerySnapshot>(
+              stream: userChatsStream(currentUid),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  List chatList = snapshot.data!.docs;
+                  if (chatList.isNotEmpty) {
+                    return ListView.separated(
+                      itemCount: chatList.length,
+                      separatorBuilder: (BuildContext context, int index) => const Divider(height: 1),
+                      itemBuilder: (BuildContext context, int index) {
+                        DocumentSnapshot chatListSnapshot = chatList[index];
+                        return StreamBuilder<QuerySnapshot>(
+                          stream: messageListStream(chatListSnapshot.id),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              List messages = snapshot.data!.docs;
+                              if (messages.isEmpty) return const SizedBox();
+                              Message message = Message.fromJson(
+                                messages.first.data() as Map<String, dynamic>,
+                              );
+                              List users = List.from(chatListSnapshot.get('users') ?? []);
+                              users.remove(currentUid);
+                              if (users.isEmpty) return const SizedBox();
+                              String recipient = users[0];
+                              return ChatItem(
+                                userId: recipient,
+                                messageCount: messages.length,
+                                msg: message.content ?? '',
+                                time: message.time ?? Timestamp.now(),
+                                chatId: chatListSnapshot.id,
+                                type: message.type ?? MessageType.TEXT,
+                                currentUserId: currentUid,
+                              );
+                            } else {
+                              return const SizedBox();
+                            }
+                          },
                         );
-                        List users = List.from(chatListSnapshot.get('users') ?? []);
-                        users.remove('${viewModel.user?.uid ?? ""}');
-                        if (users.isEmpty) return const SizedBox();
-                        String recipient = users[0];
-                        return ChatItem(
-                          userId: recipient,
-                          messageCount: messages.length,
-                          msg: message.content ?? '',
-                          time: message.time ?? Timestamp.now(),
-                          chatId: chatListSnapshot.id,
-                          type: message.type ?? MessageType.TEXT,
-                          currentUserId: viewModel.user?.uid ?? "",
-                        );
-                      } else {
-                        return SizedBox();
-                      }
-                    },
-                  );
-                },
-                separatorBuilder: (BuildContext context, int index) {
-                  return Align(
-                    alignment: Alignment.centerRight,
-                    child: Container(
-                      height: 0.5,
-                      width: MediaQuery.of(context).size.width / 1.3,
-                      child: Divider(),
-                    ),
-                  );
-                },
-              );
-            } else {
-              return Center(child: Text('No Chats'));
-            }
-          } else {
-            return Center(child: circularProgress(context));
-          }
-        },
-      ),
+                      },
+                    );
+                  } else {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[400]),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Nenhuma conversa ainda',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Conecte-se com técnicos e parceiros na barra lateral ou buscando usuários!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                } else {
+                  return Center(child: circularProgress(context));
+                }
+              },
+            ),
     );
   }
 
