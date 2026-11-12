@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:social_media_app/pocketbase/pb_compat.dart';
-import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:social_media_app/models/user.dart';
 import 'package:social_media_app/screens/view_image.dart';
 import 'package:social_media_app/services/services.dart';
@@ -11,7 +10,7 @@ import 'package:uuid/uuid.dart';
 class PostService extends Service {
   String postId = Uuid().v4();
 
-//uploads profile picture to the users collection
+  // Uploads profile picture to the users collection
   uploadProfilePicture(File image, User user) async {
     String link = await uploadImage(profilePic, image);
     var ref = usersRef.doc(user.uid);
@@ -37,10 +36,7 @@ class PostService extends Service {
         username = data['name'] ?? data['username'] ?? 'Usuário';
       }
 
-      var ref = postRef.doc();
-      await ref.set({
-        "id": ref.id,
-        "postId": ref.id,
+      await postRef.add({
         "username": username,
         "ownerId": uid,
         "owner": uid,
@@ -57,7 +53,7 @@ class PostService extends Service {
     }
   }
 
-//uploads post to the post collection
+  // Uploads post to the post collection
   uploadPost(File? image, String? location, String? description) async {
     String link = "";
     if (image != null) {
@@ -68,10 +64,8 @@ class PostService extends Service {
     user = UserModel.fromJson(
       doc.data() as Map<String, dynamic>,
     );
-    var ref = postRef.doc();
-    ref.set({
-      "id": ref.id,
-      "postId": ref.id,
+
+    await postRef.add({
       "username": user?.username ?? "Usuário",
       "ownerId": firebaseAuth.currentUser!.uid,
       "owner": firebaseAuth.currentUser!.uid,
@@ -80,12 +74,10 @@ class PostService extends Service {
       "location": location ?? "IZeny",
       "timestamp": Timestamp.now(),
       "likes": [],
-    }).catchError((e) {
-      print(e);
     });
   }
 
-//upload a comment
+  // Upload a comment
   uploadComment(String currentUserId, String comment, String postId,
       String ownerId, String mediaUrl) async {
     DocumentSnapshot doc = await usersRef.doc(currentUserId).get();
@@ -104,7 +96,7 @@ class PostService extends Service {
     }
   }
 
-//add the comment to notification collection
+  // Add the comment to notification collection
   addCommentToNotification(
       String type,
       String commentData,
@@ -126,7 +118,7 @@ class PostService extends Service {
     });
   }
 
-//add the likes to the notfication collection
+  // Add the likes to the notification collection
   addLikesToNotification(String type, String username, String userId,
       String postId, String mediaUrl, String ownerId, String userDp) async {
     await notificationRef
@@ -144,7 +136,7 @@ class PostService extends Service {
     });
   }
 
-  //remove likes from notification
+  // Remove likes from notification
   removeLikeFromNotification(
       String ownerId, String postId, String currentUser) async {
     bool isNotMe = currentUser != ownerId;

@@ -73,7 +73,7 @@ class FabContainer extends StatelessWidget {
               Divider(),
               ListTile(
                 leading: Icon(
-                  CupertinoIcons.photo_on_rectangle,
+                  Icons.photo_library_outlined,
                   size: 25.0,
                 ),
                 title: Text('Criar Post no Feed'),
@@ -88,7 +88,7 @@ class FabContainer extends StatelessWidget {
               ),
               ListTile(
                 leading: Icon(
-                  CupertinoIcons.camera_fill,
+                  Icons.camera_alt,
                   size: 25.0,
                 ),
                 title: Text('Adicionar aos Stories'),

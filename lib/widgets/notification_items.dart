@@ -104,7 +104,7 @@ class _ActivityItemsState extends State<ActivityItems> {
       padding: EdgeInsets.only(right: 20.0),
       color: Theme.of(context).colorScheme.secondary,
       child: Icon(
-        CupertinoIcons.delete,
+        Icons.delete_outline,
         color: Colors.white,
       ),
     );

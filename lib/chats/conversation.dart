@@ -317,7 +317,7 @@ class _ConversationState extends State<Conversation> {
                               // Photo Picker
                               IconButton(
                                 icon: Icon(
-                                  CupertinoIcons.photo_on_rectangle,
+                                  Icons.photo_library_outlined,
                                   color: Theme.of(context).colorScheme.secondary,
                                 ),
                                 tooltip: 'Enviar Foto',
@@ -326,7 +326,7 @@ class _ConversationState extends State<Conversation> {
                               // Video Picker
                               IconButton(
                                 icon: Icon(
-                                  CupertinoIcons.videocam_fill,
+                                  Icons.videocam,
                                   color: Theme.of(context).colorScheme.secondary,
                                 ),
                                 tooltip: 'Enviar Vídeo',

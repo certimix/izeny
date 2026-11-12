@@ -176,7 +176,7 @@ class _FeedsState extends State<Feeds> with AutomaticKeepAliveClientMixin {
           ),
           IconButton(
             icon: const Icon(
-              CupertinoIcons.chat_bubble_2_fill,
+              Icons.chat_bubble,
               size: 24.0,
             ),
             tooltip: 'Mensagens',
@@ -407,7 +407,7 @@ class _FeedsState extends State<Feeds> with AutomaticKeepAliveClientMixin {
               children: [
                 TextButton.icon(
                   onPressed: _isUploadingAttachment ? null : _pickImageAttachment,
-                  icon: const Icon(CupertinoIcons.photo, size: 18, color: Color(0xFF10B981)),
+                  icon: const Icon(Icons.image_outlined, size: 18, color: Color(0xFF10B981)),
                   label: const Text('Foto', style: TextStyle(color: Color(0xFF10B981), fontSize: 13, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(width: 4),

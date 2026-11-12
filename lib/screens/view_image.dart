@@ -160,10 +160,10 @@ class _ViewImageState extends State<ViewImage> {
           //   },
           //   icon: docs.isEmpty
           //       ? Icon(
-          //           CupertinoIcons.heart,
+          //           Icons.favorite_border,
           //         )
           //       : Icon(
-          //           CupertinoIcons.heart_fill,
+          //           Icons.favorite,
           //           color: Colors.red,
           //         ),
           // );

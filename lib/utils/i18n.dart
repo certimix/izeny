@@ -112,4 +112,3 @@ class I18n {
     return langMap[key] ?? _strings['pt']![key] ?? key;
   }
 }
-

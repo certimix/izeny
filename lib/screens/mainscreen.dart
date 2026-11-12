@@ -142,11 +142,11 @@ class _TabScreenState extends State<TabScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildMobileNavItem(0, CupertinoIcons.house_fill, CupertinoIcons.house, 'Início'),
-                _buildMobileNavItem(1, CupertinoIcons.chat_bubble_2_fill, CupertinoIcons.chat_bubble_2, 'Chat'),
+                _buildMobileNavItem(0, Icons.home, Icons.home_outlined, 'Início'),
+                _buildMobileNavItem(1, Icons.chat_bubble, Icons.chat_bubble_outline, 'Chat'),
                 _buildMobileFabItem(),
-                _buildMobileNavItem(3, CupertinoIcons.bell_fill, CupertinoIcons.bell, 'Avisos'),
-                _buildMobileNavItem(4, CupertinoIcons.person_fill, CupertinoIcons.person, 'Perfil'),
+                _buildMobileNavItem(3, Icons.notifications, Icons.notifications_none, 'Avisos'),
+                _buildMobileNavItem(4, Icons.person, Icons.person_outline, 'Perfil'),
               ],
             ),
           ),
@@ -184,32 +184,32 @@ class _TabScreenState extends State<TabScreen> {
           // Navigation Links
           _buildSidebarLink(
             index: 0,
-            iconActive: CupertinoIcons.house_fill,
-            iconInactive: CupertinoIcons.house,
+            iconActive: Icons.home,
+            iconInactive: Icons.home_outlined,
             label: I18n.t('feeds'),
           ),
           _buildSidebarLink(
             index: 1,
-            iconActive: CupertinoIcons.chat_bubble_2_fill,
-            iconInactive: CupertinoIcons.chat_bubble_2,
+            iconActive: Icons.chat_bubble,
+            iconInactive: Icons.chat_bubble_outline,
             label: I18n.t('chats'),
           ),
           _buildSidebarLink(
             index: 2,
-            iconActive: CupertinoIcons.search,
-            iconInactive: CupertinoIcons.search,
+            iconActive: Icons.search,
+            iconInactive: Icons.search,
             label: I18n.t('search'),
           ),
           _buildSidebarLink(
             index: 3,
-            iconActive: CupertinoIcons.bell_fill,
-            iconInactive: CupertinoIcons.bell,
+            iconActive: Icons.notifications,
+            iconInactive: Icons.notifications_none,
             label: I18n.t('notifications'),
           ),
           _buildSidebarLink(
             index: 4,
-            iconActive: CupertinoIcons.person_fill,
-            iconInactive: CupertinoIcons.person,
+            iconActive: Icons.person,
+            iconInactive: Icons.person_outline,
             label: I18n.t('profile'),
           ),
 
@@ -386,7 +386,7 @@ class _TabScreenState extends State<TabScreen> {
             ),
             child: Row(
               children: [
-                Icon(CupertinoIcons.search, size: 18, color: Colors.grey[400]),
+                Icon(Icons.search, size: 18, color: Colors.grey[400]),
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
@@ -425,7 +425,7 @@ class _TabScreenState extends State<TabScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(CupertinoIcons.number, size: 18, color: Color(0xFF2563EB)),
+                    const Icon(Icons.tag, size: 18, color: Color(0xFF2563EB)),
                     const SizedBox(width: 8),
                     const Text(
                       'Tópicos & Tendências',
@@ -550,7 +550,7 @@ class _TabScreenState extends State<TabScreen> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(CupertinoIcons.chat_bubble_fill, size: 16, color: Color(0xFF2563EB)),
+                                icon: const Icon(Icons.chat_bubble, size: 16, color: Color(0xFF2563EB)),
                                 tooltip: 'Enviar Mensagem Direta',
                                 onPressed: () => _openChatWithUser(u.id!),
                               ),
@@ -1003,7 +1003,7 @@ class _CreatePostDialogState extends State<_CreatePostDialog> {
                 children: [
                   TextButton.icon(
                     onPressed: _uploading ? null : _pickImage,
-                    icon: const Icon(CupertinoIcons.photo, size: 18, color: Color(0xFF10B981)),
+                    icon: const Icon(Icons.image_outlined, size: 18, color: Color(0xFF10B981)),
                     label: const Text('Foto', style: TextStyle(color: Color(0xFF10B981), fontSize: 13, fontWeight: FontWeight.bold)),
                   ),
                   const Spacer(),

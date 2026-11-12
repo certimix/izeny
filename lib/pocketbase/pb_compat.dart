@@ -79,7 +79,8 @@ class PBClient {
       request.files.add(http.MultipartFile.fromBytes(field, bytes, filename: fileName));
 
       final res = await request.send();
-      final respStr = await res.stream.bytesToString();
+      final respBytes = await res.stream.toBytes();
+      final respStr = utf8.decode(respBytes);
       if (res.statusCode == 200 || res.statusCode == 201) {
         final d = jsonDecode(respStr) as Map<String, dynamic>;
         final id = d['id'];
@@ -185,13 +186,13 @@ class FirebaseAuth {
     );
 
     if (resp.statusCode == 200) {
-      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      final data = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
       final tok = data['token'] as String;
       final rec = data['record'] as Map<String, dynamic>;
       await PBClient.instance.saveAuth(tok, rec);
       return UserCredential(user: User._fromRecord(rec));
     } else {
-      final err = jsonDecode(resp.body);
+      final err = jsonDecode(utf8.decode(resp.bodyBytes));
       throw Exception(err['message'] ?? 'Credenciais inválidas');
     }
   }
@@ -217,7 +218,7 @@ class FirebaseAuth {
     if (resp.statusCode == 200 || resp.statusCode == 201) {
       return await signInWithEmailAndPassword(email: email, password: password);
     } else {
-      final err = jsonDecode(resp.body);
+      final err = jsonDecode(utf8.decode(resp.bodyBytes));
       throw Exception(err['message'] ?? 'Falha ao registrar usuário');
     }
   }
@@ -276,7 +277,7 @@ class DocumentReference<T extends Object?> {
       final url = Uri.parse('${PBClient.instance.baseUrl}/api/collections/$collectionName/records/$id');
       final resp = await http.get(url, headers: PBClient.instance.headers);
       if (resp.statusCode == 200) {
-        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        final data = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
         return DocumentSnapshot<T>(id, _normalizeData(data), exists: true, collectionName: collectionName);
       }
     } catch (e) {
@@ -309,21 +310,33 @@ class DocumentReference<T extends Object?> {
   }
 
   Future<void> update(Map<String, dynamic> data) async {
-    final url = Uri.parse('${PBClient.instance.baseUrl}/api/collections/$collectionName/records/$id');
-    await http.patch(
-      url,
-      headers: {...PBClient.instance.headers, 'Content-Type': 'application/json'},
-      body: jsonEncode(_cleanData(data)),
-    );
+    try {
+      final url = Uri.parse('${PBClient.instance.baseUrl}/api/collections/$collectionName/records/$id');
+      await http.patch(
+        url,
+        headers: {...PBClient.instance.headers, 'Content-Type': 'application/json'},
+        body: jsonEncode(_cleanData(data)),
+      );
+    } catch (e) {
+      debugPrint('Doc update error: $e');
+    }
   }
 
   Future<void> delete() async {
-    final url = Uri.parse('${PBClient.instance.baseUrl}/api/collections/$collectionName/records/$id');
-    await http.delete(url, headers: PBClient.instance.headers);
+    try {
+      final url = Uri.parse('${PBClient.instance.baseUrl}/api/collections/$collectionName/records/$id');
+      await http.delete(url, headers: PBClient.instance.headers);
+    } catch (e) {
+      debugPrint('Doc delete error: $e');
+    }
   }
 
   CollectionReference<T> collection(String subCol) {
-    return CollectionReference<T>(subCol);
+    return CollectionReference<T>(
+      subCol,
+      parentDocId: id,
+      parentDocField: collectionName == 'chats' ? 'chat' : 'postId',
+    );
   }
 
   Stream<DocumentSnapshot<T>> snapshots() {
@@ -351,15 +364,17 @@ class DocumentReference<T extends Object?> {
 
 class Query<T extends Object?> {
   final String collectionName;
+  final String? parentDocId;
+  final String? parentDocField;
   String? sortField;
   bool isDescending = false;
   int limitCount = 30;
   final List<String> filters = [];
 
-  Query(this.collectionName);
+  Query(this.collectionName, {this.parentDocId, this.parentDocField});
 
   Query<T> clone() {
-    final q = Query<T>(collectionName);
+    final q = Query<T>(collectionName, parentDocId: parentDocId, parentDocField: parentDocField);
     q.sortField = sortField;
     q.isDescending = isDescending;
     q.limitCount = limitCount;
@@ -369,7 +384,10 @@ class Query<T extends Object?> {
 
   Query<T> orderBy(String field, {bool descending = false}) {
     final q = clone();
-    q.sortField = field;
+    String s = field;
+    if (s == 'timestamp' || s == 'time') s = 'created';
+    if (s == 'lastTextTime') s = 'updated';
+    q.sortField = s;
     q.isDescending = descending;
     return q;
   }
@@ -385,6 +403,9 @@ class Query<T extends Object?> {
     if (isEqualTo != null) {
       q.filters.add('$field = "$isEqualTo"');
     }
+    if (arrayContains != null) {
+      q.filters.add('$field ~ "$arrayContains"');
+    }
     return q;
   }
 
@@ -395,11 +416,15 @@ class Query<T extends Object?> {
         'perPage': limitCount.toString(),
       };
       if (sortField != null) {
-        String s = sortField == 'timestamp' ? 'created' : sortField!;
-        qParams['sort'] = isDescending ? '-$s' : s;
+        qParams['sort'] = isDescending ? '-$sortField' : sortField!;
       }
-      if (filters.isNotEmpty) {
-        qParams['filter'] = filters.join(' && ');
+
+      final allFilters = List<String>.from(filters);
+      if (parentDocId != null && parentDocField != null) {
+        allFilters.add('$parentDocField = "$parentDocId"');
+      }
+      if (allFilters.isNotEmpty) {
+        qParams['filter'] = allFilters.join(' && ');
       }
 
       final uri = Uri.parse('${PBClient.instance.baseUrl}/api/collections/$collectionName/records')
@@ -407,7 +432,7 @@ class Query<T extends Object?> {
 
       final resp = await http.get(uri, headers: PBClient.instance.headers);
       if (resp.statusCode == 200) {
-        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        final data = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
         final items = (data['items'] as List<dynamic>?) ?? [];
         List<QueryDocumentSnapshot<T>> docs = items.map((it) {
           final m = it as Map<String, dynamic>;
@@ -445,7 +470,8 @@ class Query<T extends Object?> {
 }
 
 class CollectionReference<T extends Object?> extends Query<T> {
-  CollectionReference(String name) : super(name);
+  CollectionReference(String name, {String? parentDocId, String? parentDocField})
+      : super(name, parentDocId: parentDocId, parentDocField: parentDocField);
 
   DocumentReference<T> doc([String? docId]) {
     String id = docId ?? const Uuid().v4().replaceAll('-', '').substring(0, 15);
@@ -454,15 +480,30 @@ class CollectionReference<T extends Object?> extends Query<T> {
 
   Future<DocumentReference<T>> add(Map<String, dynamic> data) async {
     try {
+      final payload = Map<String, dynamic>.from(data);
+      if (parentDocId != null && parentDocField != null) {
+        payload[parentDocField!] = parentDocId;
+      }
+      if (collectionName == 'messages') {
+        if (payload['senderUid'] != null && payload['sender'] == null) {
+          payload['sender'] = payload['senderUid'];
+        }
+        if (payload['mediaUrl'] != null && payload['media'] == null) {
+          payload['media'] = payload['mediaUrl'];
+        }
+      }
+
       final url = Uri.parse('${PBClient.instance.baseUrl}/api/collections/$collectionName/records');
       final resp = await http.post(
         url,
         headers: {...PBClient.instance.headers, 'Content-Type': 'application/json'},
-        body: jsonEncode(_cleanData(data)),
+        body: jsonEncode(_cleanData(payload)),
       );
       if (resp.statusCode == 200 || resp.statusCode == 201) {
-        final rec = jsonDecode(resp.body) as Map<String, dynamic>;
+        final rec = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
         return DocumentReference<T>(collectionName, rec['id']);
+      } else {
+        debugPrint('Collection $collectionName add failed (${resp.statusCode}): ${resp.body}');
       }
     } catch (e) {
       debugPrint('Collection add error: $e');
@@ -521,7 +562,8 @@ class Reference {
       }
 
       var res = await request.send();
-      var respStr = await res.stream.bytesToString();
+      var respBytes = await res.stream.toBytes();
+      var respStr = utf8.decode(respBytes);
       if (res.statusCode == 200 || res.statusCode == 201) {
         var d = jsonDecode(respStr);
         String id = d['id'];
@@ -573,6 +615,20 @@ Map<String, dynamic> _normalizeData(Map<String, dynamic> input) {
       out['timestamp'] = Timestamp(DateTime.parse(out['created']));
       out['time'] = out['timestamp'];
     } catch (_) {}
+  }
+  if (out['sender'] != null && out['senderUid'] == null) {
+    out['senderUid'] = input['sender'];
+  }
+  if (out['chat'] != null && out['chatId'] == null) {
+    out['chatId'] = input['chat'];
+  }
+  if (out['media'] != null && out['mediaUrl'] == null) {
+    if (input['media'] is String && (input['media'] as String).isNotEmpty) {
+      out['mediaUrl'] = input['media'];
+    } else if (input['media'] is List && (input['media'] as List).isNotEmpty) {
+      String fn = (input['media'] as List).first;
+      out['mediaUrl'] = '${PBClient.instance.baseUrl}/api/files/${input['collectionName'] ?? 'messages'}/${input['id']}/$fn';
+    }
   }
   if (out['media'] != null && out['media'] is List && (out['media'] as List).isNotEmpty) {
     String fn = (out['media'] as List).first;

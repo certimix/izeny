@@ -41,7 +41,7 @@ class _CommentsState extends State<Comments> {
             Navigator.pop(context);
           },
           child: Icon(
-            CupertinoIcons.xmark_circle_fill,
+            Icons.cancel,
           ),
         ),
         centerTitle: true,
@@ -338,10 +338,10 @@ class _CommentsState extends State<Comments> {
           //   },
           //   icon: docs.isEmpty
           //       ? Icon(
-          //           CupertinoIcons.heart,
+          //           Icons.favorite_border,
           //         )
           //       : Icon(
-          //           CupertinoIcons.heart_fill,
+          //           Icons.favorite,
           //           color: Colors.red,
           //         ),
           // );

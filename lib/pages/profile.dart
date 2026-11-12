@@ -611,8 +611,8 @@ class _ProfileState extends State<Profile> {
                 padding: EdgeInsets.all(3.0),
                 child: Icon(
                   docs.isEmpty
-                      ? CupertinoIcons.heart
-                      : CupertinoIcons.heart_fill,
+                      ? Icons.favorite_border
+                      : Icons.favorite,
                   color: Colors.red,
                 ),
               ),

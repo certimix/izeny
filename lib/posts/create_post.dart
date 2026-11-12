@@ -141,7 +141,7 @@ class _CreatePostState extends State<CreatePost> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    CupertinoIcons.photo,
+                                    Icons.image_outlined,
                                     size: 36,
                                     color: Theme.of(context).colorScheme.secondary,
                                   ),
@@ -201,7 +201,7 @@ class _CreatePostState extends State<CreatePost> {
                 trailing: IconButton(
                   tooltip: "Use your current location",
                   icon: Icon(
-                    CupertinoIcons.map_pin_ellipse,
+                    Icons.location_on_outlined,
                     size: 25.0,
                   ),
                   iconSize: 30.0,

@@ -256,7 +256,7 @@ class UserPost extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  CupertinoIcons.chat_bubble,
+                  Icons.chat_bubble_outline,
                   size: 18.0,
                   color: Colors.grey[600],
                 ),
@@ -319,7 +319,7 @@ class UserPost extends StatelessWidget {
                         isLiked: isLiked,
                         likeBuilder: (bool isLiked) {
                           return Icon(
-                            isLiked ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+                            isLiked ? Icons.favorite : Icons.favorite_border,
                             color: isLiked ? const Color(0xffe11d48) : Colors.grey[600],
                             size: 18.0,
                           );
@@ -376,7 +376,7 @@ class UserPost extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: Icon(
-              CupertinoIcons.share,
+              Icons.share_outlined,
               size: 17.0,
               color: Colors.grey[600],
             ),

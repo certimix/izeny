@@ -44,8 +44,10 @@ class Message {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['content'] = content;
     data['senderUid'] = senderUid;
+    data['sender'] = senderUid;
     data['messageId'] = messageId;
     data['mediaUrl'] = mediaUrl;
+    data['media'] = mediaUrl;
     data['duration'] = duration;
 
     switch (type) {

@@ -139,7 +139,7 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin {
       ),
       child: Row(
         children: [
-          Icon(CupertinoIcons.search, size: 18, color: Colors.grey[400]),
+          Icon(Icons.search, size: 18, color: Colors.grey[400]),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -193,7 +193,7 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(CupertinoIcons.search, size: 40, color: Colors.grey[400]),
+              Icon(Icons.search, size: 40, color: Colors.grey[400]),
               const SizedBox(height: 10),
               Text(
                 "Nenhum técnico ou parceiro encontrado",
@@ -247,7 +247,7 @@ class _SearchState extends State<Search> with AutomaticKeepAliveClientMixin {
               overflow: TextOverflow.ellipsis,
             ),
             trailing: IconButton(
-              icon: const Icon(CupertinoIcons.chat_bubble_fill, size: 18, color: Color(0xFF2563EB)),
+              icon: const Icon(Icons.chat_bubble, size: 18, color: Color(0xFF2563EB)),
               tooltip: 'Iniciar Conversa',
               onPressed: () {
                 final myUid = currentUserId();

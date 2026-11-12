@@ -1,25 +1,26 @@
 import 'dart:io';
 
 import 'package:social_media_app/pocketbase/pb_compat.dart';
-import 'package:social_media_app/pocketbase/pb_compat.dart';
-import 'package:social_media_app/pocketbase/pb_compat.dart';
 import 'package:social_media_app/models/message.dart';
 import 'package:social_media_app/utils/firebase.dart';
 
 class ChatService {
   FirebaseStorage storage = FirebaseStorage.instance;
 
-  sendMessage(Message message, String chatId) async {
-    //will send message to chats collection with the usersId
+  Future<void> sendMessage(Message message, String chatId) async {
     await chatRef.doc("$chatId").collection("messages").add(message.toJson());
-    //will update "lastTextTime" to the last time a text was sent
-    await chatRef.doc("$chatId").update({"lastTextTime": Timestamp.now()});
+    await chatRef.doc("$chatId").update({
+      "lastMessageTime": Timestamp.now(),
+      "lastMessage": message.content ?? '',
+    });
   }
 
   Future<String> sendFirstMessage(Message message, String recipient) async {
     User user = firebaseAuth.currentUser!;
     DocumentReference ref = await chatRef.add({
       'users': [recipient, user.uid],
+      'lastMessage': message.content ?? '',
+      'lastMessageTime': Timestamp.now(),
     });
     await sendMessage(message, ref.id);
     return ref.id;
@@ -34,7 +35,6 @@ class ChatService {
     return imageUrl;
   }
 
-//determine if a user has read a chat and updates how many messages are unread
   setUserRead(String chatId, User user, int count) async {
     DocumentSnapshot snap = await chatRef.doc(chatId).get();
     Map reads = snap.get('reads') ?? {};
@@ -42,7 +42,6 @@ class ChatService {
     await chatRef.doc(chatId).update({'reads': reads});
   }
 
-//determine when a user has start typing a message
   setUserTyping(String chatId, User user, bool userTyping) async {
     DocumentSnapshot snap = await chatRef.doc(chatId).get();
     Map typing = snap.get('typing') ?? {};
