@@ -39,3 +39,9 @@ app.*.symbols
 
 # Obfuscation related
 app.*.map.json
+
+# Frontend React 19
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+frontend/.env*
