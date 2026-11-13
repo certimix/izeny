@@ -26,13 +26,25 @@ import {
 import { 
   AuthModal 
 } from './components/AuthModal';
+import { 
+  AboutView 
+} from './components/AboutView';
 import type { Post, User } from './types';
-import { pb, getCurrentUser, isAuthenticated } from './lib/pocketbase';
-import { Loader2, RefreshCw, Feather } from 'lucide-react';
+import { pb, getCurrentUser } from './lib/pocketbase';
+import { RefreshCw, Feather } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(getCurrentUser());
-  const [currentTab, setCurrentTab] = useState<string>('feed');
+  
+  // Suporte a abertura direta da tela de propaganda/apresentação (?tab=about ou #sobre)
+  const getInitialTab = () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'about') return 'about';
+    if (window.location.hash === '#sobre' || window.location.hash === '#about') return 'about';
+    return 'feed';
+  };
+
+  const [currentTab, setCurrentTab] = useState<string>(getInitialTab());
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [feedFilter, setFeedFilter] = useState<'forYou' | 'following'>('forYou');
@@ -96,12 +108,11 @@ export const App: React.FC = () => {
     setCurrentTab('profile');
   };
 
-  const handleSelectHashtag = (tag: string) => {
+  const handleSelectHashtag = (_tag: string) => {
     setCurrentTab('feed');
-    // Filter posts containing hashtag
   };
 
-  const handleSearch = (query: string) => {
+  const handleSearch = (_query: string) => {
     setCurrentTab('explore');
   };
 
@@ -123,6 +134,14 @@ export const App: React.FC = () => {
 
         {/* CENTER COLUMN: FEED / PAGES */}
         <main className="flex-1 max-w-2xl min-h-screen bg-white dark:bg-slate-900 border-x border-slate-200 dark:border-slate-800 pb-20 md:pb-8">
+          {currentTab === 'about' && (
+            <AboutView
+              currentUser={currentUser}
+              onOpenAuth={() => setIsAuthOpen(true)}
+              onGoFeed={() => setCurrentTab('feed')}
+            />
+          )}
+
           {currentTab === 'feed' && (
             <>
               {/* STICKY FEED HEADER */}
@@ -141,16 +160,18 @@ export const App: React.FC = () => {
                 </div>
 
                 {/* TABS: PARA VOCÊ / SEGUINDO */}
-                <div className="flex border-t border-slate-100 dark:border-slate-800/80 text-sm font-bold text-slate-500 dark:text-slate-400">
+                <div className="flex border-t border-slate-100 dark:border-slate-800">
                   <button
                     onClick={() => setFeedFilter('forYou')}
-                    className={`flex-1 py-3 text-center transition relative ${
-                      feedFilter === 'forYou' ? 'text-slate-900 dark:text-white font-extrabold' : ''
+                    className={`flex-1 py-3 text-center text-sm font-bold relative transition ${
+                      feedFilter === 'forYou'
+                        ? 'text-slate-900 dark:text-white'
+                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                     }`}
                   >
                     <span>Para você</span>
                     {feedFilter === 'forYou' && (
-                      <div className="absolute bottom-0 left-1/3 right-1/3 h-1 bg-blue-600 rounded-full"></div>
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-blue-600 rounded-full" />
                     )}
                   </button>
                   <button
@@ -158,65 +179,83 @@ export const App: React.FC = () => {
                       if (!currentUser) setIsAuthOpen(true);
                       else setFeedFilter('following');
                     }}
-                    className={`flex-1 py-3 text-center transition relative ${
-                      feedFilter === 'following' ? 'text-slate-900 dark:text-white font-extrabold' : ''
+                    className={`flex-1 py-3 text-center text-sm font-bold relative transition ${
+                      feedFilter === 'following'
+                        ? 'text-slate-900 dark:text-white'
+                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                     }`}
                   >
                     <span>Seguindo</span>
                     {feedFilter === 'following' && (
-                      <div className="absolute bottom-0 left-1/3 right-1/3 h-1 bg-blue-600 rounded-full"></div>
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-blue-600 rounded-full" />
                     )}
                   </button>
                 </div>
               </header>
 
-              {/* POST COMPOSER */}
-              <Composer
-                currentUser={currentUser}
-                onPostCreated={loadPosts}
-                onOpenAuth={() => setIsAuthOpen(true)}
-              />
-
-              {/* FEED POSTS STREAM */}
-              <div>
-                {loadingPosts ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-blue-500">
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                    <span className="text-xs text-slate-400 mt-2 font-medium">Carregando feed iZeny...</span>
-                  </div>
-                ) : posts.length === 0 ? (
-                  <div className="text-center py-20 px-6">
-                    <div className="w-16 h-16 bg-blue-50 dark:bg-blue-950/40 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Feather className="w-8 h-8" />
+              {/* PROPAGANDA BANNER COMPACTO QUANDO NÃO LOGADO */}
+              {!currentUser && (
+                <div className="mx-4 my-3 p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/60 border border-blue-200/80 dark:border-blue-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-xl bg-white p-1 shadow-xs flex-shrink-0">
+                      <img src="/logo.png" alt="iZeny" className="w-full h-full object-contain" />
                     </div>
-                    <h3 className="font-extrabold text-lg text-slate-900 dark:text-white mb-1">
-                      Nenhuma publicação ainda
-                    </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-5">
-                      Compartilhe um procedimento, dica de bancada ou novidade da sua oficina técnica agora mesmo!
-                    </p>
+                    <div>
+                      <h3 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">
+                        Bem-vindo à Comunidade iZeny!
+                      </h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-300">
+                        A rede profissional para técnicos, oficinas e parceiros ZenyDesk.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                     <button
-                      onClick={() => {
-                        if (!currentUser) setIsAuthOpen(true);
-                        else setIsComposeOpen(true);
-                      }}
-                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-sm shadow-md transition"
+                      onClick={() => setCurrentTab('about')}
+                      className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-full shadow-xs transition active:scale-95"
                     >
-                      Criar Primeira Publicação
+                      Conhecer o iZeny
+                    </button>
+                    <button
+                      onClick={() => setIsAuthOpen(true)}
+                      className="px-3.5 py-1.5 border border-slate-300 dark:border-slate-600 hover:bg-white dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-full transition"
+                    >
+                      Entrar
                     </button>
                   </div>
-                ) : (
-                  posts.map((post) => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      currentUser={currentUser}
-                      onOpenComments={(p) => setActivePost(p)}
-                      onPostDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
-                      onOpenAuth={() => setIsAuthOpen(true)}
-                      onSelectUser={handleSelectUser}
-                    />
-                  ))
+                </div>
+              )}
+
+              {/* COMPOSER IN-FEED (PARA USUÁRIOS LOGADOS) */}
+              {currentUser && (
+                <div className="border-b border-slate-100 dark:border-slate-800 p-4">
+                  <Composer
+                    currentUser={currentUser}
+                    onPostCreated={loadPosts}
+                    onOpenAuth={() => setIsAuthOpen(true)}
+                  />
+                </div>
+              )}
+
+              {/* POST LIST */}
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {posts.map((p) => (
+                  <PostCard
+                    key={p.id}
+                    post={p}
+                    currentUser={currentUser}
+                    onOpenComments={(item) => setActivePost(item)}
+                    onPostDeleted={(id) => setPosts((prev) => prev.filter((item) => item.id !== id))}
+                    onOpenAuth={() => setIsAuthOpen(true)}
+                    onSelectUser={handleSelectUser}
+                  />
+                ))}
+
+                {!loadingPosts && posts.length === 0 && (
+                  <div className="py-16 text-center text-slate-400">
+                    <p className="font-semibold text-sm">Nenhuma publicação encontrada no momento.</p>
+                    <p className="text-xs mt-1">Seja o primeiro a compartilhar uma dica ou dúvida técnica!</p>
+                  </div>
                 )}
               </div>
             </>
@@ -243,7 +282,7 @@ export const App: React.FC = () => {
           {currentTab === 'explore' && (
             <div className="p-4">
               <h2 className="font-extrabold text-xl mb-4 text-slate-900 dark:text-white">Explorar Tendências</h2>
-              <p className="text-sm text-slate-500 mb-6">Busque por procedimentos técnicos, reparos de hardware, placas e ecossistema ZenyDesk.</p>
+              <p className="text-sm text-slate-500 mb-6">Busque por procedimentos técnicos, reparos de hardware, bancada e ecossistema ZenyDesk.</p>
               <div className="space-y-3">
                 {posts.map((p) => (
                   <PostCard
@@ -286,12 +325,13 @@ export const App: React.FC = () => {
           )}
         </main>
 
-        {/* RIGHT COLUMN: SEARCH & TRENDS */}
+        {/* RIGHT COLUMN: SEARCH & PROPAGANDA */}
         <RightSidebar
           onSearch={handleSearch}
           onSelectUser={handleSelectUser}
           onSelectHashtag={handleSelectHashtag}
           currentUser={currentUser}
+          onSelectTab={(tab) => setCurrentTab(tab)}
         />
 
         {/* FLOATING MOBILE COMPOSE BUTTON */}

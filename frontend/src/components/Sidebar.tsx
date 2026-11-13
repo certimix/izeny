@@ -8,8 +8,7 @@ import {
   Settings, 
   LogOut, 
   Feather, 
-  ShieldCheck,
-  CheckCircle2
+  ShieldCheck
 } from 'lucide-react';
 import type { User } from '../types';
 import { getUserAvatar } from '../lib/pocketbase';
@@ -33,6 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navItems = [
     { id: 'feed', label: 'Página Inicial', icon: Home },
+    { id: 'about', label: 'Sobre o iZeny', icon: ShieldCheck },
     { id: 'explore', label: 'Explorar', icon: Search },
     { id: 'notifications', label: 'Notificações', icon: Bell },
     { id: 'messages', label: 'Mensagens', icon: MessageSquare },
@@ -45,16 +45,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden md:flex flex-col justify-between w-64 xl:w-72 h-screen sticky top-0 px-3 py-4 border-r border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-30 select-none">
         <div className="flex flex-col space-y-2">
-          {/* LOGO */}
+          {/* LOGO OFICIAL */}
           <div 
-            onClick={() => onSelectTab('feed')} 
-            className="flex items-center space-x-3 px-3 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-2xl transition w-fit"
+            onClick={() => onSelectTab('about')} 
+            className="flex items-center space-x-2.5 px-3 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-2xl transition w-fit"
+            title="Conheça o iZeny"
           >
-            <img 
-              src="/images/logo.svg" 
-              alt="iZeny" 
-              className="h-9 w-auto object-contain drop-shadow-sm" 
-            />
+            <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs border border-slate-200/60 dark:border-slate-700">
+              <img 
+                src="/logo.png" 
+                alt="iZeny" 
+                className="w-full h-full object-contain" 
+              />
+            </div>
             <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
               iZeny
             </span>
@@ -183,3 +186,4 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </>
   );
 };
+export default Sidebar;

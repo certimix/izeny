@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, ShieldCheck, UserPlus, Check } from 'lucide-react';
+import { Search, ShieldCheck, UserPlus, Check, ArrowRight } from 'lucide-react';
 import type { User } from '../types';
 import { pb, getUserAvatar } from '../lib/pocketbase';
 
@@ -8,6 +8,7 @@ interface RightSidebarProps {
   onSelectUser: (username: string) => void;
   onSelectHashtag: (tag: string) => void;
   currentUser: User | null;
+  onSelectTab?: (tab: string) => void;
 }
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({
@@ -15,19 +16,11 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   onSelectUser,
   onSelectHashtag,
   currentUser,
+  onSelectTab,
 }) => {
   const [searchVal, setSearchVal] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
-
-  const trendingTopics = [
-    { tag: '#zenydesk', category: 'Ecossistema & Comunidade', posts: '128' },
-    { tag: '#dicas_tecnicas', category: 'Bancada, Placas & Hardware', posts: '94' },
-    { tag: '#ti_ajuda', category: 'Dúvidas Técnicas & Redes', posts: '76' },
-    { tag: '#suporte_direto', category: 'Atendimento Especializado', posts: '52' },
-    { tag: '#ordem_servico', category: 'Gestão & Laudos Map-OS', posts: '41' },
-    { tag: '#assistencia_tecnica', category: 'Oficinas & Reparos', posts: '35' },
-  ];
 
   useEffect(() => {
     // Fetch users from PocketBase
@@ -38,7 +31,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
       const list = res.items.filter((u) => !currentUser || u.id !== currentUser.id);
       setUsers(list.slice(0, 4));
     }).catch((err) => {
-      console.warn('Erro ao carregar técnicos recomendados:', err);
+      console.warn('Erro ao carregar tecnicos recomendados:', err);
     });
   }, [currentUser]);
 
@@ -72,32 +65,33 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         </div>
       </form>
 
-      {/* TRENDING TOPICS CARD */}
-      <div className="bg-white dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
-        <h3 className="font-extrabold text-base text-slate-900 dark:text-white mb-3">
-          Tópicos &amp; Tendências
-        </h3>
-        <div className="flex flex-col space-y-3">
-          {trendingTopics.map((item) => (
-            <div
-              key={item.tag}
-              onClick={() => onSelectHashtag(item.tag)}
-              className="flex justify-between items-start cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 p-2 -mx-2 rounded-xl transition group"
-            >
-              <div>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">
-                  {item.category}
-                </span>
-                <span className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-500 transition">
-                  {item.tag}
-                </span>
-              </div>
-              <span className="text-xs text-slate-400 font-medium">
-                {item.posts} posts
-              </span>
-            </div>
-          ))}
+      {/* IZENY PROPAGANDA CARD (Substituindo o bloco removido de Tópicos) */}
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white rounded-2xl p-5 shadow-sm border border-blue-500/30 relative overflow-hidden">
+        <div className="flex items-center space-x-3 mb-3">
+          <div className="w-11 h-11 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-xs flex-shrink-0">
+            <img 
+              src="/logo.png" 
+              alt="iZeny" 
+              className="w-full h-full object-contain" 
+            />
+          </div>
+          <div>
+            <h4 className="font-extrabold text-base tracking-tight leading-tight text-white">Comunidade iZeny</h4>
+            <span className="text-[11px] text-blue-200 font-medium">Rede Oficial ZenyDesk</span>
+          </div>
         </div>
+        <p className="text-xs text-blue-100 leading-relaxed mb-4">
+          Conecte-se com técnicos, oficinas e empresas em todo o Brasil. Suporte especializado e networking profissional.
+        </p>
+        {onSelectTab && (
+          <button
+            onClick={() => onSelectTab('about')}
+            className="w-full py-2.5 px-3 bg-white text-blue-700 hover:bg-blue-50 font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5 active:scale-95"
+          >
+            <span>Conhecer a Plataforma</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {/* WHO TO FOLLOW / TÉCNICOS & PARCEIROS */}
@@ -183,3 +177,4 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
     </aside>
   );
 };
+export default RightSidebar;
